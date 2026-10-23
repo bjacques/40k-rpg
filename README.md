@@ -9,11 +9,12 @@ gh api -X POST repos/bjacques/40k-rpg/pages -f "source[branch]=main" -f "source[
 ```
 
 
-## Optional Google Sheets backup
+## Google Sheets save (preferred) with localStorage and CSV
 
-The page always saves to the browser (localStorage). If a player pastes a **Sheets key**
-into "Google Sheets backup (optional)", each save is also copied to a Google Sheet owned by the GM.
-Restore is manual (button), and Download/Load CSV remains the fallback.
+The page always auto-saves to the browser (localStorage). Saving to the GM's Google Sheet is the
+preferred way to keep a character: once a player pastes a **Sheets key** into the "Save" section at the
+bottom of the page, every save is also copied to the Sheet, and **Save to sheet** / **Restore from sheet**
+buttons are there for manual use. Download/Load CSV is the secondary fallback file backup.
 
 ### GM setup (one time, free)
 1. Create a Google Sheet.
@@ -95,19 +96,19 @@ Link: https://bjacques.github.io/40k-rpg/
 3. Fill in the form. It saves itself on your device as you go.
    Use the same browser every time you come back.
 
-Optional backup to the GM's Google Sheet (lets you restore on another phone):
-4. Scroll to "Google Sheets backup (optional)" under the Export buttons.
-5. Paste this key into "Sheets key":
+Save to the GM's Google Sheet (preferred, lets you restore on another phone):
+4. Scroll to the "Save" section at the bottom of the page.
+5. Paste this key into "Google Sheets key":
    DEPLOYMENT_ID:PASSPHRASE
 6. Make sure "Players Name" is filled in (names are matched in lower case, so
    "Brad" and "brad" are the same). Edit anything and wait a few seconds.
-   The status line should say "Backed up HH:MM".
+   Or press "Save to sheet". The status line should say "Saved to sheet HH:MM".
 
 Moving to a new phone or browser:
 7. Open the link, paste the same key, type your Players Name, and press
    "Restore from sheet". Pick your character if asked.
 
-Always available as a fallback:
+Secondary fallback (file backup):
 - "Download CSV" saves a file. "Load CSV" brings it back. Do this now and then
   as a safety net, especially before clearing browser data.
 

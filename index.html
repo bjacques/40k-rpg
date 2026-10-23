@@ -131,15 +131,15 @@ button{-webkit-appearance:none;appearance:none}
 <textarea id="notes" rows="16" aria-label="Additional Detail" placeholder="Enter any additional details (maximum 16 lines)"></textarea>
 <p id="noteslines" style="margin:4px 0 0;font-size:14px"></p>
 
-<h2>Export</h2>
-<div class="row"><button id="csv">Download CSV</button><label for="csvfile" class="btn" id="loadcsv">Load CSV</label><input type="file" id="csvfile" accept=".csv,text/csv,text/plain" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button id="reset">Reset</button></div>
-<p style="font-size:.85em;opacity:.7;margin:6px 0 0">Auto-saved on this device. Use Download CSV to back up or move to another device.</p>
-<details style="margin-top:10px"><summary>Google Sheets backup (optional)</summary>
-<label for="sheetkey" style="margin-top:6px">Sheets key</label>
+<h2>Save</h2>
+<p style="font-size:.85em;opacity:.7;margin:0 0 10px">Your character is always auto-saved on this device. Save to the Google Sheet to keep it safe and use it on other devices.</p>
+<label for="sheetkey">Google Sheets key</label>
 <input type="text" id="sheetkey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste the key from your GM">
-<div class="row" style="margin-top:6px"><button id="sheetrestore">Restore from sheet</button></div>
+<div class="row" style="margin-top:6px"><button id="sheetsave">Save to sheet</button><button id="sheetrestore">Restore from sheet</button></div>
 <p id="sheetstat" role="status" style="font-size:.85em;opacity:.7;margin:6px 0 0"></p>
-</details>
+<p style="font-size:.85em;opacity:.7;margin:14px 0 6px">Backup file (use if Sheets isn't available)</p>
+<div class="row"><button id="csv">Download CSV</button><label for="csvfile" class="btn" id="loadcsv">Load CSV</label><input type="file" id="csvfile" accept=".csv,text/csv,text/plain" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
+<div class="row" style="margin-top:14px"><button id="reset">Reset</button></div>
 <div id="dlg2" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:11">
 <div role="alertdialog" aria-modal="true" aria-labelledby="dlg2t" style="background:var(--bg);border:2px solid var(--accent);padding:18px;max-width:420px">
 <p id="dlg2t" style="margin:0 0 14px;font-size:18px">This weapon choice is not available for your choosen speciality</p>
@@ -495,22 +495,25 @@ async function sheetFetch(url,opt){
   const c=new AbortController(),t=setTimeout(()=>c.abort(),10000);
   try{const r=await fetch(url,{...opt,signal:c.signal});return await r.json()}finally{clearTimeout(t)}
 }
-function pushSheet(){
+function pushSheet(now){
   clearTimeout(sheetT);
-  if(!sheetCfg())return;
+  if(!sheetCfg()){if(now===true)sheetStat("Enter your Sheets key first.");return}
+  if(now===true)sheetStat("Saving...");
   sheetT=setTimeout(async()=>{
     const cfg=sheetCfg(),player=$("player").value.trim().toLowerCase();
-    if(!cfg||!player)return;
+    if(!cfg)return;
+    if(!player){if(now===true)sheetStat("Type your Players Name above first.");return}
     try{
       const j=await sheetFetch(cfg.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({code:cfg.code,player,character:$("name").value.trim(),chapter:$("chapter").value,spec:$("spec").value,rank:$("rank").value,csv:csvText()})});
-      sheetStat(j&&j.ok?"Backed up "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"Backup failed (check your key). Your local copy is safe.");
-    }catch(e){sheetStat("Backup failed. Your local copy is safe.")}
-  },3000);
+      sheetStat(j&&j.ok?"Saved to sheet "+new Date().toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"}):"Save failed (check your key). Your local copy is safe.");
+    }catch(e){sheetStat("Save failed. Your local copy is safe.")}
+  },now===true?0:3000);
 }
+$("sheetsave").onclick=()=>{try{localStorage.setItem(SAVE_KEY,csvText())}catch(e){}pushSheet(true)};
 $("sheetkey").value=(()=>{try{return localStorage.getItem(SHEET_KEY)||""}catch(e){return ""}})();
 $("sheetkey").addEventListener("change",e=>{
   try{const k=e.target.value.trim();k?localStorage.setItem(SHEET_KEY,k):localStorage.removeItem(SHEET_KEY)}catch(err){}
-  sheetStat(sheetCfg()?"Key saved. Backing up after your next edit.":"");
+  sheetStat(sheetCfg()?"Key saved. Saving to the sheet after your next edit, or press Save to sheet.":"");
 });
 $("sheetrestore").onclick=async()=>{
   const cfg=sheetCfg(),player=$("player").value.trim().toLowerCase();
