@@ -7,3 +7,75 @@ From github CLI Create a new repo and enable pages
 gh repo create bjacques/40k-rpg --public --source=. --remote=origin --push
 gh api -X POST repos/bjacques/40k-rpg/pages -f "source[branch]=main" -f "source[path]=/" --jq '.html_url'
 ```
+
+
+## Optional Google Sheets backup
+
+The page always saves to the browser (localStorage). If a player pastes a **Sheets key**
+into "Google Sheets backup (optional)", each save is also copied to a Google Sheet owned by the GM.
+Restore is manual (button), and Download/Load CSV remains the fallback.
+
+### GM setup (one time, free)
+1. Create a Google Sheet.
+2. Extensions > Apps Script, replace the contents with the script below.
+3. Project Settings > Script Properties > add `TABLE_CODE` = a shared passphrase (no `:` needed, any text).
+4. Deploy > New deployment > type **Web app**, Execute as **Me**, Who has access **Anyone**. Authorise when asked.
+5. Copy the deployment ID (the part of the `/exec` URL between `/s/` and `/exec`).
+6. Send each player the key `DEPLOYMENT_ID:PASSPHRASE` privately. Do not commit it.
+7. After editing the script later: Deploy > Manage deployments > Edit > New version.
+
+### Code.gs
+```js
+const SHEET_NAME = 'Characters';
+const HEADERS = ['Key', 'Player', 'Character', 'Chapter', 'Speciality', 'Rank', 'UpdatedAt', 'CSV'];
+
+function sheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(SHEET_NAME);
+  if (!sh) { sh = ss.insertSheet(SHEET_NAME); sh.appendRow(HEADERS); }
+  return sh;
+}
+function ok_(code) {
+  const t = PropertiesService.getScriptProperties().getProperty('TABLE_CODE');
+  return !!t && code === t;
+}
+function json_(o) {
+  return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  let d;
+  try { d = JSON.parse(e.postData.contents); } catch (err) { return json_({ ok: false }); }
+  if (!ok_(d.code) || !d.player || typeof d.csv !== 'string' || d.csv.length > 45000) return json_({ ok: false });
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const sh = sheet_();
+    const key = (d.player + '|' + (d.character || '')).toLowerCase();
+    const row = [key, d.player, d.character || '', d.chapter || '', d.spec || '', d.rank || '', new Date().toISOString(), d.csv];
+    const n = sh.getLastRow() - 1;
+    const keys = n > 0 ? sh.getRange(2, 1, n, 1).getValues().flat() : [];
+    const i = keys.indexOf(key);
+    const r = i >= 0 ? i + 2 : sh.getLastRow() + 1;
+    const range = sh.getRange(r, 1, 1, 8);
+    range.setNumberFormat('@');
+    range.setValues([row]);
+  } finally {
+    lock.releaseLock();
+  }
+  return json_({ ok: true });
+}
+
+function doGet(e) {
+  const p = e.parameter || {};
+  if (!ok_(p.code) || !p.player) return json_({ ok: false });
+  const sh = sheet_();
+  const n = sh.getLastRow() - 1;
+  if (n < 1) return json_({ ok: true, rows: [] });
+  const want = String(p.player).trim().toLowerCase();
+  const rows = sh.getRange(2, 1, n, 8).getValues()
+    .filter(r => String(r[1]).trim().toLowerCase() === want)
+    .map(r => ({ character: r[2], updatedAt: r[6], csv: r[7] }));
+  return json_({ ok: true, rows });
+}
+```
