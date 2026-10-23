@@ -19,13 +19,14 @@ Restore is manual (button), and Download/Load CSV remains the fallback.
 1. Create a Google Sheet.
 2. Extensions > Apps Script, replace the contents with the script below.
 3. Project Settings > Script Properties > add `TABLE_CODE` = a shared passphrase (no `:` needed, any text).
-4. Deploy > New deployment > type **Web app**, Execute as **Me**, Who has access **Anyone**. Authorise when asked.
+4. Deploy > New deployment > type **Web app**, Execute as **Me**, Who has access **Anyone**. Authorise when asked (the "app hasn't been verified" warning is expected for your own script: Advanced > Go to project > Allow).
 5. Copy the deployment ID (the part of the `/exec` URL between `/s/` and `/exec`).
 6. Send each player the key `DEPLOYMENT_ID:PASSPHRASE` privately. Do not commit it.
 7. After editing the script later: Deploy > Manage deployments > Edit > New version.
 
 ### Code.gs
 ```js
+/** @OnlyCurrentDoc */
 const SHEET_NAME = 'Characters';
 const HEADERS = ['Key', 'Player', 'Character', 'Chapter', 'Speciality', 'Rank', 'UpdatedAt', 'CSV'];
 
