@@ -133,6 +133,7 @@ button{-webkit-appearance:none;appearance:none}
 
 <h2>Export</h2>
 <div class="row"><button id="csv">Download CSV</button><label for="csvfile" class="btn" id="loadcsv">Load CSV</label><input type="file" id="csvfile" accept=".csv,text/csv,text/plain" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button id="reset">Reset</button></div>
+<p style="font-size:.85em;opacity:.7;margin:6px 0 0">Auto-saved on this device. Use Download CSV to back up or move to another device.</p>
 <div id="dlg2" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:11">
 <div role="alertdialog" aria-modal="true" aria-labelledby="dlg2t" style="background:var(--bg);border:2px solid var(--accent);padding:18px;max-width:420px">
 <p id="dlg2t" style="margin:0 0 14px;font-size:18px">This weapon choice is not available for your choosen speciality</p>
@@ -356,9 +357,12 @@ function csvName(){
   const ds=t.getFullYear()+"-"+String(t.getMonth()+1).padStart(2,"0")+"-"+String(t.getDate()).padStart(2,"0");
   return [clean($("player").value)||"Player",clean($("name").value)||"Character",ds].join("_")+".csv";
 }
-$("csv").onclick=async()=>{
+function csvText(){
   const cell=c=>{let s=String(c);if(/^[=+\-@]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};
-  const data="\uFEFF"+csvRows().map(r=>r.map(cell).join(",")).join("\r\n");
+  return "﻿"+csvRows().map(r=>r.map(cell).join(",")).join("\r\n");
+}
+$("csv").onclick=async()=>{
+  const data=csvText();
   const fn=csvName();
   try{
     const d=await (window.claude&&claude.use?claude.use("downloads"):null);
@@ -468,6 +472,16 @@ function updNotes(){
 }
 $("notes").addEventListener("input",updNotes);
 updNotes();
+const SAVE_KEY="dw40k.char.v1";
+let saveT;
+function sched(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(SAVE_KEY,csvText())}catch(e){}},400)}
+document.addEventListener("input",sched);
+document.addEventListener("change",sched);
+$("reset").addEventListener("pointerdown",sched);
+try{
+  const s=localStorage.getItem(SAVE_KEY);
+  if(s){loadCsvText(s);msg("Restored your last character.")}
+}catch(e){}
 </script>
 </body>
 </html>
