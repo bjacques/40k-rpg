@@ -499,7 +499,7 @@ function pushSheet(){
   clearTimeout(sheetT);
   if(!sheetCfg())return;
   sheetT=setTimeout(async()=>{
-    const cfg=sheetCfg(),player=$("player").value.trim();
+    const cfg=sheetCfg(),player=$("player").value.trim().toLowerCase();
     if(!cfg||!player)return;
     try{
       const j=await sheetFetch(cfg.url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify({code:cfg.code,player,character:$("name").value.trim(),chapter:$("chapter").value,spec:$("spec").value,rank:$("rank").value,csv:csvText()})});
@@ -513,7 +513,7 @@ $("sheetkey").addEventListener("change",e=>{
   sheetStat(sheetCfg()?"Key saved. Backing up after your next edit.":"");
 });
 $("sheetrestore").onclick=async()=>{
-  const cfg=sheetCfg(),player=$("player").value.trim();
+  const cfg=sheetCfg(),player=$("player").value.trim().toLowerCase();
   if(!cfg){sheetStat("Enter your Sheets key first.");return}
   if(!player){sheetStat("Type your Players Name above first.");return}
   sheetStat("Restoring...");
