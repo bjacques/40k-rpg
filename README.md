@@ -80,3 +80,38 @@ function doGet(e) {
   return json_({ ok: true, rows });
 }
 ```
+
+## Instructions to send to each player
+
+Copy, fill in the key, and send privately (e.g. WhatsApp DM).
+
+```
+Deathwatch Character Generator
+Link: https://bjacques.github.io/40k-rpg/
+
+1. Open the link in Safari (iPhone) or Chrome (Android).
+   Do NOT use the WhatsApp in-app browser, it keeps its own separate storage.
+2. Optional, iPhone: Share > Add to Home Screen. This keeps your character the longest.
+3. Fill in the form. It saves itself on your device as you go.
+   Use the same browser every time you come back.
+
+Optional backup to the GM's Google Sheet (lets you restore on another phone):
+4. Scroll to "Google Sheets backup (optional)" under the Export buttons.
+5. Paste this key into "Sheets key":
+   DEPLOYMENT_ID:PASSPHRASE
+6. Make sure "Players Name" is filled in (names are matched in lower case, so
+   "Brad" and "brad" are the same). Edit anything and wait a few seconds.
+   The status line should say "Backed up HH:MM".
+
+Moving to a new phone or browser:
+7. Open the link, paste the same key, type your Players Name, and press
+   "Restore from sheet". Pick your character if asked.
+
+Always available as a fallback:
+- "Download CSV" saves a file. "Load CSV" brings it back. Do this now and then
+  as a safety net, especially before clearing browser data.
+
+Notes:
+- Don't use private/incognito tabs, or clear site data, if you want local saves to last.
+- Keep the key private. Anyone with it can read and change the shared sheet.
+```
