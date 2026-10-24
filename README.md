@@ -12,7 +12,7 @@ gh api -X POST repos/bjacques/40k-rpg/pages -f "source[branch]=main" -f "source[
 ## Google Sheets save (preferred) with localStorage and CSV
 
 The page always auto-saves to the browser (localStorage). Saving to the GM's Google Sheet is the
-preferred way to keep a character: once a player pastes a **Sheets key** into the "Save" section at the
+preferred way to keep a character: once a player pastes a **group passphrase** into the "Save" section at the
 bottom of the page, every save is also copied to the Sheet, and **Save to sheet** / **Restore from sheet**
 buttons are there for manual use. Download/Load CSV is the secondary fallback file backup.
 
@@ -21,8 +21,8 @@ buttons are there for manual use. Download/Load CSV is the secondary fallback fi
 2. Extensions > Apps Script, replace the contents with the script below.
 3. Project Settings > Script Properties > add `TABLE_CODE` = a shared passphrase (no `:` needed, any text).
 4. Deploy > New deployment > type **Web app**, Execute as **Me**, Who has access **Anyone**. Authorise when asked (the "app hasn't been verified" warning is expected for your own script: Advanced > Go to project > Allow).
-5. Copy the deployment ID (the part of the `/exec` URL between `/s/` and `/exec`).
-6. Send each player the key `DEPLOYMENT_ID:PASSPHRASE` privately. Do not commit it.
+5. Copy the deployment ID (the part of the `/exec` URL between `/s/` and `/exec`) and set it as `SHEET_ID` in `index.html`. It is not secret; the passphrase is what protects the Sheet. Changing deployments gives a new ID.
+6. Send each player the passphrase (`TABLE_CODE`) privately. Do not commit it.
 7. After editing the script later: Deploy > Manage deployments > Edit > New version.
 
 ### Code.gs
@@ -84,7 +84,7 @@ function doGet(e) {
 
 ## Instructions to send to each player
 
-Copy, fill in the key, and send privately (e.g. WhatsApp DM).
+Copy, fill in the passphrase, and send privately (e.g. WhatsApp DM).
 
 ```
 Deathwatch Character Generator
@@ -98,14 +98,14 @@ Link: https://bjacques.github.io/40k-rpg/
 
 Save to the GM's Google Sheet (preferred, lets you restore on another phone):
 4. Scroll to the "Save" section at the bottom of the page.
-5. Paste this key into "Google Sheets key":
-   DEPLOYMENT_ID:PASSPHRASE
+5. Type this passphrase into "Group passphrase (Google Sheets)":
+   PASSPHRASE
 6. Make sure "Players Name" is filled in (names are matched in lower case, so
    "Brad" and "brad" are the same). Edit anything and wait a few seconds.
    Or press "Save to sheet". The status line should say "Saved to sheet HH:MM".
 
 Moving to a new phone or browser:
-7. Open the link, paste the same key, type your Players Name, and press
+7. Open the link, type the same passphrase, type your Players Name, and press
    "Restore from sheet". Pick your character if asked.
 
 Secondary fallback (file backup):
@@ -114,5 +114,5 @@ Secondary fallback (file backup):
 
 Notes:
 - Don't use private/incognito tabs, or clear site data, if you want local saves to last.
-- Keep the key private. Anyone with it can read and change the shared sheet.
+- Keep the passphrase private. Anyone with it can read and change the shared sheet.
 ```
