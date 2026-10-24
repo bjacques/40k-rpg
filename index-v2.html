@@ -67,16 +67,17 @@ button{-webkit-appearance:none;appearance:none}
 .tabbar .tab[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
 .tabbar .tab:active{background:none}
 @media (hover:hover){.tabbar .tab:hover{background:none;color:var(--accent)}}
-.chip{flex:0 0 auto;font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:13px;white-space:nowrap}.chip b{color:var(--accent)}
 main.tabs-on .panel{display:none}main.tabs-on .panel.on{display:block}
 .panel:focus{outline:none}.panel>h2:first-child{border-top:0;margin-top:14px;padding-top:0}
 .tabnav{justify-content:space-between;margin-top:22px}
 main{padding-bottom:110px}
 #savebar{position:fixed;left:0;right:0;bottom:0;z-index:10;background:var(--bg);border-top:3px solid var(--accent);padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px))}
 #savebar .sbin{max-width:1024px;margin:0 auto}
+.bad{outline:2px solid #d22;outline-offset:1px}
 #savemore{max-height:55vh;overflow-y:auto;padding-bottom:10px;margin-bottom:8px;border-bottom:1px solid var(--line)}
 .sbrow{display:flex;align-items:center;gap:8px}
-#sheetstat{flex:1 1 auto;min-width:0;font-size:.85em;opacity:.8;line-height:1.2}
+#sbstat{flex:1 1 auto;min-width:0;font-size:.85em;line-height:1.2}
+#sbstat #msg{min-height:0;margin:0}#sheetstat{display:block;opacity:.8}
 </style>
 </head>
 <body>
@@ -87,8 +88,7 @@ main{padding-bottom:110px}
 <p class="note">Forge a Battle-Brother of the Deathwatch. Choose a name, Chapter, Speciality, then spend 100 points across your characteristics (max 20 per stat).</p>
 
 <div id="tabtop"></div>
-<div class="tabbar" id="tabbar"><div class="tabs" id="tablist" role="tablist" aria-label="Sections"></div><span class="chip" title="Characteristic points left">Pts <b id="tabpts">100</b></span></div>
-<div id="msg" role="status"></div>
+<div class="tabbar" id="tabbar"><div class="tabs" id="tablist" role="tablist" aria-label="Sections"></div></div>
 <section class="panel" id="p-identity" role="tabpanel" aria-labelledby="t-identity" tabindex="-1">
 <h2>Players Name</h2>
 <input type="text" id="player" placeholder="Players Name" aria-label="Players Name" autocomplete="off">
@@ -181,9 +181,9 @@ main{padding-bottom:110px}
 <input type="text" id="sheetkey" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Type the passphrase from your GM">
 <div class="row" style="margin-top:6px"><button id="sheetrestore">Restore from sheet</button></div>
 <p style="font-size:.85em;opacity:.7;margin:14px 0 6px">Backup file (use if Sheets isn't available)</p>
-<div class="row"><label for="csvfile" class="btn" id="loadcsv">Load CSV</label><input type="file" id="csvfile" accept=".csv,text/csv,text/plain" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button id="reset">Reset</button></div>
+<div class="row"><button id="csv">Download CSV</button><label for="csvfile" class="btn" id="loadcsv">Load CSV</label><input type="file" id="csvfile" accept=".csv,text/csv,text/plain" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button id="reset">Reset</button></div>
 </div>
-<div class="sbrow"><button id="sheetsave">Save to sheet</button><button id="csv">Download CSV</button><span id="sheetstat" role="status"></span><button id="savetog" aria-expanded="false" aria-controls="savemore">More</button></div>
+<div class="sbrow"><button id="sheetsave">Save to sheet</button><div id="sbstat"><div id="msg" role="status"></div><span id="sheetstat" role="status"></span></div><button id="savetog" aria-expanded="false" aria-controls="savemore">More</button></div>
 </div></div>
 <div id="dlg2" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:11">
 <div role="alertdialog" aria-modal="true" aria-labelledby="dlg2t" style="background:var(--bg);border:2px solid var(--accent);padding:18px;max-width:420px">
@@ -318,7 +318,7 @@ function calc(){
     const t=baseOf(k)+adj[k];$("bs_"+k).textContent=rdy()?baseOf(k):"—";
     $("t_"+k).textContent=rdy()?t:"—";$("b_"+k).textContent=rdy()?Math.floor(t/10):"—";
   });
-  $("left").textContent=POOL-used;$("tabpts").textContent=POOL-used;$("statshint").hidden=rdy();
+  $("left").textContent=POOL-used;$("statshint").hidden=rdy();
   const q=equipment();$("armour").innerHTML="<b>"+q.armour.replace("(select a Chapter)",'<span class="ph">(select a Chapter)</span>')+"</b>";
   const RK=["name","class","range","rof","dmg","pen","clip","reload","special","req","renown"],GK=["name","class","range","rof","dmg","pen","special","req","renown"],MK=["name","class","dmg","pen","special","req","renown"];
   $("wpns").innerHTML=q.weapons.map(w=>tr(w,RK,1)).join("");
@@ -620,7 +620,28 @@ try{
   if(s){loadCsvText(s);msg("Restored your last character.")}
 }catch(e){}
 updDev();
+document.addEventListener("input",e=>e.target.classList.remove("bad"));document.addEventListener("change",e=>e.target.classList.remove("bad"));
 const TABS=[["identity","Identity"],["stats","Stats"],["gear","Gear"],["skills","Skills"],["notes","Notes"]],TAB_KEY="dw40k.tab";
+const TAB_RULES={
+  identity:[["player","Enter the Players Name."],["name","Enter a Character Name."],["chapter","Choose a Chapter."],["spec","Choose a Speciality."]],
+  stats:[["renown","Renown Points must be a whole number."],["ppr","Psychic Power Rating must be a whole number."]]
+};
+function badField(tab){
+  for(const [k,text] of TAB_RULES[tab]||[]){
+    const e=$(k);
+    if(!e.offsetParent)continue;
+    const v=e.value.trim();
+    if(e.tagName==="SELECT"||e.id==="player"||e.id==="name"?!v:!/^\d*$/.test(v))return {el:e,text};
+  }
+  return null;
+}
+function tryTab(id,scroll){
+  const cur=document.querySelector(".panel.on"),curId=cur&&cur.id.slice(2);
+  if(id===curId)return true;
+  const bad=curId&&badField(curId);
+  if(bad){msg(bad.text);bad.el.classList.add("bad");bad.el.scrollIntoView({block:"center"});bad.el.focus();return false}
+  msg("");showTab(id,scroll);return true;
+}
 function showTab(id,scroll){
   TABS.forEach(([k])=>{const on=k===id;$("p-"+k).classList.toggle("on",on);const t=$("t-"+k);t.setAttribute("aria-selected",on);t.tabIndex=on?0:-1;if(on)t.scrollIntoView({block:"nearest",inline:"nearest"})});
   try{localStorage.setItem(TAB_KEY,id)}catch(e){}
@@ -631,11 +652,11 @@ function showTab(id,scroll){
   const ids=TABS.map(t=>t[0]);
   TABS.forEach(([id,label],i)=>{
     const b=document.createElement("button");b.className="tab";b.id="t-"+id;b.type="button";b.setAttribute("role","tab");b.setAttribute("aria-controls","p-"+id);b.textContent=label;
-    b.onclick=()=>showTab(id,true);
-    b.onkeydown=e=>{const j={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:ids.length-1}[e.key];if(j==null)return;e.preventDefault();const n=(j+ids.length)%ids.length;showTab(ids[n],false);$("t-"+ids[n]).focus()};
+    b.onclick=()=>tryTab(id,true);
+    b.onkeydown=e=>{const j={ArrowRight:i+1,ArrowLeft:i-1,Home:0,End:ids.length-1}[e.key];if(j==null)return;e.preventDefault();const n=(j+ids.length)%ids.length;if(tryTab(ids[n],false))$("t-"+ids[n]).focus()};
     $("tablist").appendChild(b);
     const nav=document.createElement("div");nav.className="row tabnav";
-    const mk=(txt,to)=>{const x=document.createElement("button");x.type="button";x.textContent=txt;x.onclick=()=>showTab(to,true);nav.appendChild(x)};
+    const mk=(txt,to)=>{const x=document.createElement("button");x.type="button";x.textContent=txt;x.onclick=()=>tryTab(to,true);nav.appendChild(x)};
     if(i>0)mk("\u2039 "+TABS[i-1][1],ids[i-1]);else nav.appendChild(document.createElement("span"));
     if(i<ids.length-1)mk(TABS[i+1][1]+" \u203a",ids[i+1]);
     $("p-"+id).appendChild(nav);
@@ -643,8 +664,9 @@ function showTab(id,scroll){
   document.querySelector("main").classList.add("tabs-on");
   let id=location.hash.replace(/^#t=/,"");
   if(!ids.includes(id)){try{id=localStorage.getItem(TAB_KEY)}catch(e){}}
-  showTab(ids.includes(id)?id:"identity",false);
-  $("gotoid").onclick=()=>showTab("identity",true);
+  showTab(ids.includes(id)&&!badField("identity")?id:"identity",false);
+  $("gotoid").onclick=()=>tryTab("identity",true);
+  $("reset").addEventListener("pointerdown",()=>showTab("identity",true));
   $("savetog").onclick=()=>{const m=$("savemore"),o=m.hidden;m.hidden=!o;$("savetog").setAttribute("aria-expanded",o);$("savetog").textContent=o?"Less":"More"};
 })();
 </script>
