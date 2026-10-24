@@ -12,9 +12,9 @@ gh api -X POST repos/bjacques/40k-rpg/pages -f "source[branch]=main" -f "source[
 ## Google Sheets save (preferred) with localStorage and CSV
 
 The page always auto-saves to the browser (localStorage). Saving to the GM's Google Sheet is the
-preferred way to keep a character: once a player pastes a **group passphrase** into the "Save" section at the
-bottom of the page, every save is also copied to the Sheet, and **Save to sheet** / **Restore from sheet**
-buttons are there for manual use. Download/Load CSV is the secondary fallback file backup.
+preferred way to keep a character: once a player pastes a **group passphrase** into the Save bar at the
+bottom of the page (press **More**), every save is also copied to the Sheet, and the **Save** / **Restore from sheet**
+buttons are there for manual use. Download/Load CSV (under **More**) is the secondary fallback file backup.
 
 ### GM setup (one time, free)
 1. Create a Google Sheet.
@@ -97,19 +97,19 @@ Link: https://bjacques.github.io/40k-rpg/
    Use the same browser every time you come back.
 
 Save to the GM's Google Sheet (preferred, lets you restore on another phone):
-4. Scroll to the "Save" section at the bottom of the page.
+4. The Save bar is always at the bottom of the page. Press "More".
 5. Type this passphrase into "Group passphrase (Google Sheets)":
    PASSPHRASE
 6. Make sure "Players Name" is filled in (names are matched in lower case, so
    "Brad" and "brad" are the same). Edit anything and wait a few seconds.
-   Or press "Save to sheet". The status line should say "Saved to sheet HH:MM".
+   Or press "Save". The bar should say "Saved to sheet HH:MM".
 
 Moving to a new phone or browser:
 7. Open the link, type the same passphrase, type your Players Name, and press
    "Restore from sheet". Pick your character if asked.
 
 Secondary fallback (file backup):
-- "Download CSV" saves a file. "Load CSV" brings it back. Do this now and then
+- Under "More", "Download CSV" saves a file. "Load CSV" brings it back. Do this now and then
   as a safety net, especially before clearing browser data.
 
 Notes:
