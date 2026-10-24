@@ -184,7 +184,7 @@ main{padding-bottom:110px}
 <p style="font-size:.85em;opacity:.7;margin:14px 0 6px">Backup file (use if Sheets isn't available)</p>
 <div class="row"><button id="csv">Download CSV</button><label for="csvfile" class="btn" id="loadcsv">Load CSV</label><input type="file" id="csvfile" accept=".csv,text/csv,text/plain" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"><button id="reset">Reset</button></div>
 </div>
-<div class="sbrow"><button id="sheetsave">Save to sheet</button><div id="sbstat"><div id="msg" role="status"></div><span id="sheetstat" role="status"></span></div><button id="savetog" aria-expanded="false" aria-controls="savemore">More</button></div>
+<div class="sbrow"><button id="sheetsave">Save</button><div id="sbstat"><div id="msg" role="status"></div><span id="sheetstat" role="status"></span></div><button id="savetog" aria-expanded="false" aria-controls="savemore">More</button></div>
 </div></div>
 <div id="dlg2" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px;z-index:11">
 <div role="alertdialog" aria-modal="true" aria-labelledby="dlg2t" style="background:var(--bg);border:2px solid var(--accent);padding:18px;max-width:420px">
@@ -584,11 +584,15 @@ function pushSheet(now){
     }catch(e){sheetStat("Save failed. Your local copy is safe.")}
   },now===true?0:3000);
 }
-$("sheetsave").onclick=()=>{try{localStorage.setItem(SAVE_KEY,csvText())}catch(e){}pushSheet(true)};
+$("sheetsave").onclick=()=>{
+  try{localStorage.setItem(SAVE_KEY,csvText())}catch(e){}
+  pushSheet(true);
+  if(!sheetCfg())setTimeout(()=>{if($("savemore").hidden)$("savetog").click();$("sheetkey").focus()},2000);
+};
 $("sheetkey").value=(()=>{try{return localStorage.getItem(SHEET_KEY)||""}catch(e){return ""}})();
 $("sheetkey").addEventListener("change",e=>{
   try{const k=e.target.value.trim();k?localStorage.setItem(SHEET_KEY,k):localStorage.removeItem(SHEET_KEY)}catch(err){}
-  sheetStat(sheetCfg()?"Passphrase saved. Saving to the sheet after your next edit, or press Save to sheet.":"");
+  sheetStat(sheetCfg()?"Passphrase saved. Saving to the sheet after your next edit, or press Save.":"");
 });
 $("sheetrestore").onclick=async()=>{
   const cfg=sheetCfg(),player=$("player").value.trim().toLowerCase();
