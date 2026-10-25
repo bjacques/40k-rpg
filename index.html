@@ -167,6 +167,12 @@ main{padding-bottom:110px}
 <p style="margin:0 0 8px"><b>Talents selected: <span id="talcount">0</span> / 2</b></p>
 <div class="table-wrap"><table><thead><tr><th class="num">Select</th><th>Talent</th><th>Requirement</th><th>Description</th></tr></thead><tbody id="talents"></tbody></table></div>
 
+<div id="psysec" hidden>
+<h2>Psychic Abilities</h2>
+<p style="margin:0 0 8px"><b>Psychic Abilities selected: <span id="psycount">0</span> / 3</b></p>
+<div class="table-wrap"><table><thead><tr><th class="num">Select</th><th>Ability</th><th>Description</th><th>Reference</th></tr></thead><tbody id="psylist"></tbody></table></div>
+</div>
+
 </section>
 <section class="panel" id="p-notes" role="tabpanel" aria-labelledby="t-notes" tabindex="-1">
 <h2>Additional Detail</h2>
@@ -201,6 +207,8 @@ EQUIP_ALL.power=[{"name": "Lightning Claw", "class": "Melee", "dmg": "1d10+6 E",
 EQUIP_ALL.power.push(...[{"name": "Power Axe", "class": "Melee", "dmg": "1d10+8 E", "pen": 6, "special": "Power Field, Unbalanced", "req": 20, "renown": "Respected"}, {"name": "Power Sword", "class": "Melee", "dmg": "1d10+6 E", "pen": 6, "special": "Power Field, Balanced", "req": 20, "renown": "Respected"}, {"name": "Thunder Hammer", "class": "Melee", "dmg": "2d10+5 E", "pen": 8, "special": "Power Field, Concussive, Unwieldy", "req": 30, "renown": "Distinguished"}]);
 const ARMOUR_AP=[["Head",8],["Right Arm",8],["Body",10],["Left Arm",8],["Right Leg",8],["Left Leg",8]];
 const EQUIP_SPEC={}; // add per-speciality extra gear here: {Apothecary:{weapons:[...]}}
+const PSY=[["Inspire","Bolster your comrades against pinning and fear.","Page 190"],["Augury","Read the Emperor\u2019s Tarot to divine hints of the future.","Page 192"],["Reading","Sense a creature\u2019s aura to gain insight into their nature.","Page 193"],["Avenger","Summon a flaming avatar of death to incinerate an area.","Page 194"],["Iron Arm","Your arm is sheathed in a field of psychic energy, and you may ward off enemy attacks.","Page 194"],["Short Range Telepathy","You can communicate mind to mind.","Page 191"],["Smite","Conjure lethal bolts of lightning to blast your enemies.","Page 195"]];
+let psy=[];
 let armed="",armedPower="",grenade="",grenQty=0;const PISTOL="Astartes Bolt Pistol";
 const armable=()=>{const q=equipment();return[...q.weapons,...q.melee,...q.power]};
 const rad=(w,g)=>'<td><input type="radio" name="'+(g===3?"grenade":g===2?"armedpwr":"armed")+'" value="'+w.name+'" aria-label="Arm '+w.name+'"'+(w.name===(g===3?grenade:g===2?armedPower:armed)?" checked":"")+'>'+(g===3?' <select class="gq" aria-label="Quantity of '+w.name+'"'+(w.name===grenade?'':' disabled')+'>'+[0,1,2,3].map(q=>'<option'+(w.name===grenade&&q===grenQty?' selected':'')+'>'+q+'</option>').join('')+'</select>':'')+'</td>';
@@ -244,7 +252,9 @@ const GMSG="Your specialty does not support this weapon type";
 const GREN_BAN=["Apothecary","Librarian","Techmarine"];
 const SMSG="This is not an available skill for your selected speciality";
 const SBAN={"Apothecary":["Navigation","Tech-Use","Pilot","Drive Vehicle"],"Librarian":["Drive Vehicle","Pilot"],"Devastator":["Ciphers","Pilot","Evaluate","Inquiry","Invocation","Deceive","Disguise"],"Assault":["Invocation","Ciphers","Deceive","Disguise"]};
-const skillBanned=n=>(SBAN[$("spec").value]||[]).some(b=>n.startsWith(b));
+const LIB=["Librarian"];
+const SONLY={"Medicae":["Apothecary"],"Security":["Techmarine"],"Foresight":LIB,"Psyniscience":LIB,"Lore: Forbidden (psykers)":LIB,"Lore: Forbidden (Warp)":LIB};
+const skillBanned=n=>(SBAN[$("spec").value]||[]).some(b=>n.startsWith(b))||(n in SONLY&&!SONLY[n].includes($("spec").value));
 const showMsg=t=>{$("dlg2t").textContent=typeof t==="string"?t:WMSG;$("dlg2").style.display="flex"};
 $("dok").onpointerdown=()=>setTimeout(()=>{$("dlg2").style.display="none"},300);
 function enforceSpec(alertIt){
@@ -263,7 +273,7 @@ document.addEventListener("change",e=>{
   if(n==="armed"){armed=v;if(v!==PISTOL)armedPower="";calc()}
   else if(n==="armedpwr"){if(armed!==PISTOL)armed="";armedPower=v;calc()}
 });
-const SKILLS=[["Awareness", "Free", "PER"], ["Carouse", "Free", "T"], ["Ciphers (specific)", "Full", "INT", 1], ["Climb", "Half", "S"], ["Common Lore - Adeptus Astartes", "Free", "FEL"], ["Common Lore - Imperium", "Free", "FEL"], ["Common Lore - War", "Free", "FEL"], ["Concealment", "Half", "AG"], ["Dodge", "Reaction", "AG"], ["Drive Vehicle (specific)", "Half", "INT", 1], ["Evaluate", "Timed", "INT"], ["Inquiry", "1 Hour", "FEL"], ["Intimidate", "Full", "S"], ["Invocation", "1 Hour", "WP"], ["Literacy", "Varies", "INT"], ["Logic", "1 Hour", "INT"], ["Navigation (specific)", "Varies", "INT", 1], ["Pilot (specific)", "Half", "AG", 1], ["Scrutiny", "Full", "PER"], ["Search", "Full", "PER"], ["Silent Move", "Free", "AG"], ["Survival", "Varies", "INT"], ["Swim", "Full", "S"], ["Tech-Use", "Varies", "INT"], ["Tracking", "Free", "INT"], ["Astartes Weapon Specialisation (specific)", "Varies", "WS", 1], ["Signature Wargear (specific)", "Varies", "T", 1], ["Deceive", "Free", "FEL"], ["Disguise", "Half", "FEL"]];
+const SKILLS=[["Awareness", "Free", "PER"], ["Carouse", "Free", "T"], ["Ciphers (specific)", "Full", "INT", 1], ["Climb", "Half", "S"], ["Common Lore - Adeptus Astartes", "Free", "FEL"], ["Common Lore - Imperium", "Free", "FEL"], ["Common Lore - War", "Free", "FEL"], ["Concealment", "Half", "AG"], ["Dodge", "Reaction", "AG"], ["Drive Vehicle (specific)", "Half", "INT", 1], ["Evaluate", "Timed", "INT"], ["Inquiry", "1 Hour", "FEL"], ["Intimidate", "Full", "S"], ["Invocation", "1 Hour", "WP"], ["Literacy", "Varies", "INT"], ["Logic", "1 Hour", "INT"], ["Lore: Forbidden (psykers)", "Half", "INT"], ["Lore: Forbidden (Warp)", "Half", "INT"], ["Medicae", "Full", "INT"], ["Navigation (specific)", "Varies", "INT", 1], ["Pilot (specific)", "Half", "AG", 1], ["Scrutiny", "Full", "PER"], ["Search", "Full", "PER"], ["Foresight", "Full", "INT"], ["Psyniscience", "Full", "PER"], ["Security", "Varies", "AG"], ["Silent Move", "Free", "AG"], ["Survival", "Varies", "INT"], ["Swim", "Full", "S"], ["Tech-Use", "Varies", "INT"], ["Tracking", "Free", "INT"], ["Astartes Weapon Specialisation (specific)", "Varies", "WS", 1], ["Signature Wargear (specific)", "Varies", "T", 1], ["Deceive", "Free", "FEL"], ["Disguise", "Half", "FEL"]];
 SKILLS.sort((a,b)=>a[0].localeCompare(b[0],"en",{sensitivity:"base"}));
 const LV=["Basic","Trained","Expert","Veteran"];
 let skLv={},skSp={};
@@ -328,7 +338,7 @@ function calc(){
   $("mel").innerHTML=q.melee.map(w=>tr(w,MK,1)).join("");
   $("pwr").innerHTML=q.power.map(w=>tr(w,MK,2)).join("");
   if(typeof updSkillBase==="function")updSkillBase();
-  updJump();
+  updJump();updPsy();
   const d=derived();
   const R=rdy(),V=x=>R?x:"—";
   $("fate").textContent=V(d.fatePoints);$("half").textContent=V(d.movement.half);
@@ -378,6 +388,7 @@ function compact(){
   if(Object.keys(sk).length)o.skills=sk;
   if(grenade){o.grenade=grenade;o.grenadeQuantity=grenQty}
   if(tal.length)o.talents=tal.slice();
+  if(psy.length)o.psychicAbilities=psy.slice();
   if(v("xpadd"))o.additionalXp=v("xpadd");
   if(v("notes"))o.additionalDetail=v("notes");
   return o;
@@ -403,6 +414,7 @@ function csvRows(){
   SKILLS.forEach(([n,us,st2,sp])=>{if(skLv[n])add("Skills",n,LV[skLv[n]-1]);if(sp&&(skSp[n]||"").trim())add("Skills",n+" - detail",skSp[n].trim())});
   if(grenade){add("Equipment","Grenade",grenade);add("Equipment","Grenade Quantity",grenQty)}
   tal.forEach(t=>add("Talents","Talent",t));
+  psy.forEach(t=>add("Psychic Abilities","Ability",t));
   add("Additional Characteristics","Starting Wounds",derived().wounds);
   add("Experience","Starting Experience",derived().experience);
   if(v("xpadd"))add("Experience","Additional XP",v("xpadd"));
@@ -482,6 +494,7 @@ function loadCsvText(text){
   renderSkills();
   tal=getAll("Talents","Talent").filter(x=>TALENTS.some(t=>t[0]===x)).slice(0,2);
   renderTalents();
+  psy=getAll("Psychic Abilities","Ability").filter(x=>PSY.some(p=>p[0]===x)).slice(0,3);
   $("xpadd").value=get("Experience","Additional XP");
   $("renown").value=get("Experience","Renown Points");$("ppr").value=get("Experience","Psychic Power Rating");
   $("notes").value=get("Additional Detail","Additional Detail").split(/\r?\n/).slice(0,16).join("\n");updNotes();
@@ -489,7 +502,6 @@ function loadCsvText(text){
   if(sw){const tb=Math.floor((baseOf("T")+adj.T)/10),r=sw-18-tb;if(r>=1&&r<=6)woundRoll=r}
   enforceSpec(false);
   calc();
-  
 }
 $("csvfile").onchange=e=>{
   const f=e.target.files[0];if(!f)return;
@@ -502,7 +514,7 @@ $("csvfile").onchange=e=>{
   r.readAsText(f);
 };
 $("reset").onpointerdown=()=>{
-  $("name").value="";$("chapter").selectedIndex=0;buildSpecs();setDem("");$("skmsg").textContent="";$("renown").value="";$("ppr").value="";$("notes").value="";updNotes();grenade="";grenQty=0;tal=[];renderTalents();$("player").value="";$("rank").value="1";$("xpadd").value="";skLv={};skSp={};renderSkills();$("shield").value="";$("jump").value="";showCrest();armed="";armedPower="";
+  $("name").value="";$("chapter").selectedIndex=0;buildSpecs();setDem("");$("skmsg").textContent="";$("renown").value="";$("ppr").value="";$("notes").value="";updNotes();grenade="";grenQty=0;tal=[];renderTalents();psy=[];$("player").value="";$("rank").value="1";$("xpadd").value="";skLv={};skSp={};renderSkills();$("shield").value="";$("jump").value="";showCrest();armed="";armedPower="";
   STATS.forEach(([k])=>{adj[k]=0;$("a_"+k).value=0});woundRoll=1+Math.floor(Math.random()*6);calc();msg("Reset.");
 };
 $("rank").addEventListener("input",e=>{e.target.value=e.target.value.replace(/[^0-9]/g,"")});
@@ -526,6 +538,26 @@ $("talents").addEventListener("change",e=>{
   renderTalents();
 });
 renderTalents();
+function renderPsy(){
+  $("psycount").textContent=psy.length;
+  $("psylist").innerHTML=PSY.map(([n,ds,rf],i)=>'<tr><td class="num"><input type="checkbox" data-p="'+i+'" aria-label="Select '+n+'"'+(psy.includes(n)?" checked":"")+'></td><td>'+n+'</td><td>'+ds+'</td><td>'+rf+'</td></tr>').join("");
+}
+function updPsy(){
+  const lib=$("spec").value==="Librarian";
+  if(!lib)psy=[];
+  $("psysec").hidden=!lib;
+  renderPsy();
+}
+$("psylist").addEventListener("change",e=>{
+  const t=e.target;if(t.dataset.p===undefined)return;
+  const n=PSY[+t.dataset.p][0];
+  if(t.checked){
+    if($("spec").value!=="Librarian"){renderPsy();return}
+    if(psy.length>=3){showMsg("Only 3 Psychic Abilities may be selected");renderPsy();return}
+    psy.push(n);
+  }else psy=psy.filter(x=>x!==n);
+  renderPsy();
+});
 function updJump(){
   const ok=["Assault","Tactical"].includes($("spec").value);
   $("jumpwrap").style.display=ok?"":"none";
@@ -622,7 +654,6 @@ try{
   const s=localStorage.getItem(SAVE_KEY);
   if(s){loadCsvText(s);msg("Restored your last character.")}
 }catch(e){}
-
 document.addEventListener("input",e=>e.target.classList.remove("bad"));document.addEventListener("change",e=>e.target.classList.remove("bad"));
 const TABS=[["identity","Identity"],["stats","Stats"],["gear","Gear"],["skills","Skills"],["notes","Notes"]],TAB_KEY="dw40k.tab";
 function updIntro(left){
