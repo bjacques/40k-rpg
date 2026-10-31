@@ -57,7 +57,7 @@ main.tabs-on #p-identity{display:grid!important;grid-template-columns:1fr 2fr;co
 #p-identity>h2:nth-child(3){grid-area:1/2}#p-identity>.row:nth-child(4){grid-area:2/2}
 #p-identity>h2:nth-child(5){display:none}#p-identity>.row:nth-child(6){grid-area:3/1/auto/3}
 #p-identity>h2:nth-child(7){grid-area:4/1}#p-identity>label[for=dem]{display:none}
-#p-identity>#dem{grid-area:5/1}#p-identity>#demdesc{grid-area:4/2/span 2;margin:0!important;align-self:start}
+#p-identity>#dem{grid-area:5/1}#p-identity>#demdesc{grid-area:5/2;margin:0!important;align-self:end}
 #p-identity .row{display:flex;gap:10pt;align-items:flex-end}
 #p-identity .row>div{flex:1}
 #p-identity .row>div:has(#crest){display:none}
@@ -72,6 +72,9 @@ main.tabs-on #p-stats{display:grid!important;grid-template-columns:3fr 2fr;colum
 #p-stats td input[type=text]{min-width:18mm}
 #p-stats>h2{margin:0 0 3pt!important;align-self:end;height:auto}
 #p-stats>.table-wrap{margin-top:0}
+#p-stats>h2:nth-child(5){border-bottom:0}
+main.tabs-on #p-stats{padding-top:12pt}
+#p-gear>h2:first-child{margin-top:12pt}
 #p-gear>div[style*="flex-wrap"]{display:grid!important;grid-template-columns:1fr 1fr;grid-template-rows:auto 1fr auto;column-gap:12pt;align-items:start}
 #p-gear>div[style*="flex-wrap"]>div:first-child{display:contents}
 #p-gear>div[style*="flex-wrap"]>div:first-child>.table-wrap{grid-area:1/1/span 2}
@@ -81,6 +84,7 @@ main.tabs-on #p-stats{display:grid!important;grid-template-columns:3fr 2fr;colum
 
 #talents tr:not(:has(input:checked)),#psylist tr:not(:has(input:checked)),#wpns tr:not(:has(input:checked)),#pwr tr:not(:has(input:checked)){display:none}
 
+#wpns::after,#mel::after,#pwr::after{content:'';display:table-row;height:13pt;border-bottom:.25pt solid #bbb}
 #p-skills{break-before:page}
 #armloc{break-inside:avoid}
 
