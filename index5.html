@@ -177,13 +177,27 @@ main{padding-bottom:110px}
 </section>
 <section class="panel" id="p-combat" role="tabpanel" aria-labelledby="t-combat" tabindex="-1">
 <h2>Melee</h2>
-<p class="note"><b>The Roll:</b> Roll D100 against your Weapon Skill (WS).<br><b>Base Damage:</b> 1D10 + 5 + Strength Bonus (Energy Damage | Pen 6 | Balanced quality).</p>
-<div class="row"><div><label for="cb-ws">Weapon Skill (WS)</label><input type="number" id="cb-ws" min="0" max="100"></div>
-<div><label for="cb-sb">Strength Bonus</label><input type="number" id="cb-sb" min="0"></div>
-<div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" min="1" max="100"></div>
-<div><label for="cb-dmg">D10 Damage Roll</label><input type="number" id="cb-dmg" min="1" max="10"></div></div>
+<p class="note"><b>The Roll:</b> Roll D100 against your Weapon Skill (WS).<br><b>Base Damage:</b> weapon damage dice + weapon bonus + Strength Bonus.</p>
+<div class="table-wrap"><table><tbody>
+<tr><th>Equipped weapon</th><td id="cb-wpn"></td></tr>
+<tr><th>Weapon Skill (WS)</th><td id="cb-ws"></td></tr>
+<tr><th>Strength Bonus</th><td id="cb-sb"></td></tr>
+</tbody></table></div>
+<div class="row"><div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" min="1" max="100"></div>
+<div><label for="cb-dmg" id="cb-dl">Damage dice roll</label><input type="number" id="cb-dmg" min="1"></div></div>
 <p><button type="button" id="cb-go">Calculate</button></p>
 <div id="cb-out" class="note" hidden></div>
+<h2>Ranged</h2>
+<p class="note"><b>The Roll:</b> Roll D100 against your Ballistic Skill (BS).<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
+<div class="table-wrap"><table><tbody>
+<tr><th>Equipped weapon</th><td id="rb-wpn"></td></tr>
+<tr><th>Ballistic Skill (BS)</th><td id="rb-bs"></td></tr>
+</tbody></table></div>
+<div class="row"><div><label for="rb-mode">Fire mode</label><select id="rb-mode"></select></div>
+<div><label for="rb-roll">D100 Roll</label><input type="number" id="rb-roll" min="1" max="100"></div>
+<div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" min="1"></div></div>
+<p><button type="button" id="rb-go">Calculate</button></p>
+<div id="rb-out" class="note" hidden></div>
 </section>
 <section class="panel" id="p-notes" role="tabpanel" aria-labelledby="t-notes" tabindex="-1">
 <h2>Additional Detail</h2>
@@ -723,18 +737,81 @@ function showTab(id,scroll){
 
 (function(){
 const g=i=>document.getElementById(i);
-function fill(){try{const w=baseOf("WS")+adj.WS,s=Math.floor((baseOf("S")+adj.S)/10);if(!g("cb-ws").value&&w)g("cb-ws").value=w;if(!g("cb-sb").value&&s)g("cb-sb").value=s}catch(e){}}
-document.addEventListener("click",e=>{if(e.target.id==="t-combat")setTimeout(fill,0)});
+function ctx(){
+  const q=equipment(),nm=armedPower||(q.melee.concat(q.power).some(w=>w.name===armed)?armed:"");
+  const w=nm?q.melee.concat(q.power).find(x=>x.name===nm):null;
+  const ws=baseOf("WS")+adj.WS,sb=Math.floor((baseOf("S")+adj.S)/10);
+  let d=null;
+  if(w){const m=/^(\d+)d(\d+)\s*\+\s*(\d+)\s*(\w)?/i.exec(w.dmg);if(m)d={n:+m[1],f:+m[2],k:+m[3],t:m[4]==="E"?"Energy":m[4]==="R"?"Rending":m[4]==="X"?"Explosive":"Impact"}}
+  return{w,ws,sb,d};
+}
+function show(){
+  const c=ctx();
+  g("cb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")":"None - arm a Melee or Power Weapon on the Gear tab";
+  g("cb-ws").textContent=c.ws||"Choose a Chapter and Speciality first";
+  g("cb-sb").textContent=c.ws?c.sb:"-";
+  g("cb-dl").textContent=c.d?"Damage roll ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
+  return c;
+}
+document.addEventListener("click",e=>{if(e.target.id==="t-combat")setTimeout(show,0)});
 g("cb-go").onclick=()=>{
-  const ws=parseInt(g("cb-ws").value),sb=parseInt(g("cb-sb").value),r=parseInt(g("cb-roll").value),d=parseInt(g("cb-dmg").value),o=g("cb-out");
+  const c=show(),r=parseInt(g("cb-roll").value),d=parseInt(g("cb-dmg").value),o=g("cb-out");
   o.hidden=false;
-  if([ws,sb,r].some(isNaN)||r<1||r>100){o.textContent="Enter WS, Strength Bonus and a D100 roll (1-100).";return}
-  const hit=r<=ws,dos=Math.floor(ws/10)-Math.floor(r/10);
-  let h="<b>The Roll:</b> D100 "+r+" vs WS "+ws+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
-  h+=hit?"Degrees of success: floor("+ws+"/10) &minus; floor("+r+"/10) = "+(dos+1)+" (including the base success)":"Degrees of failure: floor("+r+"/10) &minus; floor("+ws+"/10) = "+(Math.floor(r/10)-Math.floor(ws/10));
+  if(!c.w){o.textContent="No melee or power weapon is armed. Arm one on the Gear tab.";return}
+  if(!c.ws){o.textContent="Weapon Skill is unavailable. Choose a Chapter and Speciality first.";return}
+  if(isNaN(r)||r<1||r>100){o.textContent="Enter a D100 roll (1-100).";return}
+  const ws=c.ws,hit=r<=ws,dos=Math.floor(ws/10)-Math.floor(r/10);
+  let h="<b>Weapon:</b> "+c.w.name+"<br><b>The Roll:</b> D100 "+r+" vs WS "+ws+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
+  h+=hit?"Degrees of success: 1 + (floor("+ws+"/10) &minus; floor("+r+"/10)) = "+(dos+1):"Degrees of failure: floor("+r+"/10) &minus; floor("+ws+"/10) = "+(Math.floor(r/10)-Math.floor(ws/10));
   if(hit){
-    if(isNaN(d)||d<1||d>10)h+="<br><br>Enter your 1D10 damage roll to see damage.";
-    else{const t=d+5+sb;h+="<br><br><b>Base Damage:</b> 1D10 + 5 + SB<br>= "+d+" + 5 + "+sb+"<br>= <b>"+t+" Energy damage</b> | Pen 6 | Balanced quality"}
+    if(!c.d)h+="<br><br>Could not read weapon damage ("+c.w.dmg+").";
+    else if(isNaN(d)||d<c.d.n||d>c.d.n*c.d.f)h+="<br><br>Enter your "+c.d.n+"D"+c.d.f+" damage roll ("+c.d.n+"-"+c.d.n*c.d.f+") to see damage.";
+    else{const t=d+c.d.k+c.sb;h+="<br><br><b>Base Damage:</b> "+c.d.n+"D"+c.d.f+" + "+c.d.k+" + SB<br>= "+d+" + "+c.d.k+" + "+c.sb+"<br>= <b>"+t+" "+c.d.t+" damage</b> | Pen "+c.w.pen+" | "+c.w.special}
+  }
+  o.innerHTML=h};
+})();
+
+(function(){
+const g=i=>document.getElementById(i);
+const TY={E:"Energy",R:"Rending",X:"Explosive",I:"Impact"};
+function ctx(){
+  const q=equipment(),w=q.weapons.find(x=>x.name===armed)||null;
+  const bs=baseOf("BS")+adj.BS;
+  let d=null,modes=[];
+  if(w){
+    const m=/^(\d+)d(\d+)(?:\s*\+\s*(\d+))?\s*\(?(\w)\)?/i.exec(w.dmg||"");
+    if(m)d={n:+m[1],f:+m[2],k:+(m[3]||0),t:TY[m[4].toUpperCase()]||"Impact"};
+    String(w.rof||"").split("/").forEach((v,i)=>{const n=parseInt(v);if(n>0)modes.push({k:["Single","Semi-auto","Full auto"][i],n,i})});
+  }
+  return{w,bs,d,modes};
+}
+function show(){
+  const c=ctx(),sel=g("rb-mode"),prev=sel.value;
+  g("rb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")":"None - arm a ranged weapon on the Gear tab";
+  g("rb-bs").textContent=c.bs||"Choose a Chapter and Speciality first";
+  g("rb-dl").textContent=c.d?"Damage roll per hit ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
+  sel.innerHTML=c.modes.map(m=>"<option value='"+m.i+"'>"+m.k+" ("+m.n+")</option>").join("");
+  if(prev)sel.value=prev;
+  return c;
+}
+document.addEventListener("click",e=>{if(e.target.id==="t-combat")setTimeout(show,0)});
+g("rb-go").onclick=()=>{
+  const c=show(),r=parseInt(g("rb-roll").value),d=parseInt(g("rb-dmg").value),o=g("rb-out");
+  o.hidden=false;
+  if(!c.w){o.textContent="No ranged weapon is armed. Arm one on the Gear tab.";return}
+  if(!c.bs){o.textContent="Ballistic Skill is unavailable. Choose a Chapter and Speciality first.";return}
+  if(!c.modes.length){o.textContent="This weapon has no usable fire mode.";return}
+  if(isNaN(r)||r<1||r>100){o.textContent="Enter a D100 roll (1-100).";return}
+  const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0],bs=c.bs,hit=r<=bs,diff=Math.floor(bs/10)-Math.floor(r/10);
+  let h="<b>Weapon:</b> "+c.w.name+" ("+m.k+")<br><b>The Roll:</b> D100 "+r+" vs BS "+bs+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
+  if(!hit)h+="Degrees of failure: floor("+r+"/10) &minus; floor("+bs+"/10) = "+(Math.floor(r/10)-Math.floor(bs/10));
+  else{
+    const extra=m.i===1?Math.floor(diff/2):m.i===2?diff:0,hits=Math.min(1+extra,m.n);
+    h+="Degrees of success: 1 + (floor("+bs+"/10) &minus; floor("+r+"/10)) = "+(diff+1)+"<br>";
+    h+="Hits: "+(m.i===0?"1 (single shot)":"1 + "+extra+" extra ("+(m.i===1?"1 per 2 degrees":"1 per degree")+"), capped at RoF "+m.n+" = <b>"+hits+"</b>");
+    if(!c.d)h+="<br><br>Could not read weapon damage ("+c.w.dmg+").";
+    else if(isNaN(d)||d<c.d.n||d>c.d.n*c.d.f)h+="<br><br>Enter your "+c.d.n+"D"+c.d.f+" damage roll ("+c.d.n+"-"+c.d.n*c.d.f+") to see damage.";
+    else{const t=d+c.d.k;h+="<br><br><b>Base Damage per hit:</b> "+c.d.n+"D"+c.d.f+(c.d.k?" + "+c.d.k:"")+"<br>= "+d+(c.d.k?" + "+c.d.k:"")+"<br>= <b>"+t+" "+c.d.t+" damage</b> | Pen "+c.w.pen+" | "+c.w.special+(hits>1?"<br>Roll damage separately for each of the "+hits+" hits.":"")}
   }
   o.innerHTML=h};
 })();
