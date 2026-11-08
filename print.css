@@ -87,5 +87,5 @@ main.tabs-on #p-stats{padding-top:12pt}
 #p-skills{break-before:page}
 #armloc{break-inside:avoid}
 
-#notes{display:block;width:100%;height:auto;min-height:0;rows:16;border:.5pt solid #000;padding:2pt;resize:none;overflow:visible;field-sizing:content;white-space:pre-wrap}
+#notes{display:block;width:100%;height:auto;min-height:0;rows:16;border:0;padding:2pt;resize:none;overflow:visible;field-sizing:content;white-space:pre-wrap}
 #p-notes>h2:first-child,#psysec+*{margin-top:10pt}
