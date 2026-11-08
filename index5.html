@@ -178,15 +178,15 @@ main{padding-bottom:110px}
 <section class="panel" id="p-combat" role="tabpanel" aria-labelledby="t-combat" tabindex="-1">
 <h2>Melee</h2>
 <p class="note"><span id="cb-wpn"></span><br><b>The Roll:</b> Roll D100 against your WS (<span id="cb-ws"></span>).<br><b>Base Damage:</b> weapon damage dice + weapon bonus + SB (<span id="cb-sb"></span>)</p>
-<div class="row"><div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" min="1" max="100"></div>
-<div><label for="cb-dmg" id="cb-dl">Damage dice roll</label><input type="number" id="cb-dmg" min="1"></div></div>
+<div class="row"><div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" autocomplete="off" value="" min="1" max="100"></div>
+<div><label for="cb-dmg" id="cb-dl">Damage dice roll</label><input type="number" id="cb-dmg" autocomplete="off" value="" min="1"></div></div>
 <p><button type="button" id="cb-go">Calculate</button></p>
 <div id="cb-out" class="note" hidden></div>
 <h2>Ranged</h2>
 <p class="note"><span id="rb-wpn"></span><br><b>The Roll:</b> Roll D100 against your BS (<span id="rb-bs"></span>).<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
-<div class="row"><div><label for="rb-mode">Fire mode</label><select id="rb-mode"></select></div>
-<div><label for="rb-roll">D100 Roll</label><input type="number" id="rb-roll" min="1" max="100"></div>
-<div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" min="1"></div></div>
+<div class="row"><div><label for="rb-mode">Fire mode</label><select id="rb-mode" autocomplete="off"></select></div>
+<div><label for="rb-roll">D100 Roll</label><input type="number" id="rb-roll" autocomplete="off" value="" min="1" max="100"></div>
+<div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" autocomplete="off" value="" min="1"></div></div>
 <p><button type="button" id="rb-go">Calculate</button></p>
 <div id="rb-out" class="note" hidden></div>
 </section>
@@ -662,8 +662,9 @@ $("sheetrestore").onclick=async()=>{
     sheetStat("Restored "+(pick.character||"character")+" from the sheet.");
   }catch(e){sheetStat("Restore failed. Check your connection.")}
 };
-document.addEventListener("input",sched);
-document.addEventListener("change",sched);
+const notCombat=e=>!e.target.closest("#p-combat");
+document.addEventListener("input",e=>{if(notCombat(e))sched()});
+document.addEventListener("change",e=>{if(notCombat(e))sched()});
 document.addEventListener("pointerdown",e=>{if(e.target.closest("button[data-k],#rnd,#unarm,#skall"))sched()});
 $("reset").addEventListener("pointerdown",sched);
 try{
