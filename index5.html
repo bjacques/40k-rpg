@@ -734,7 +734,8 @@ function showTab(id,scroll){
 })();
 
 const LK={};
-function setLinks(){for(const[t,id]of[["melee","cb-link"],["ranged","rb-link"]])document.getElementById(id).href="combat.html?"+new URLSearchParams(Object.assign({type:t},LK.m,LK.r))}
+function setLinks(){for(const[t,id]of[["melee","cb-link"],["ranged","rb-link"]])document.getElementById(id).href="combat.html?"+new URLSearchParams(Object.assign({type:t},LK.m,LK.r));document.querySelectorAll("a.wl").forEach(a=>a.href=document.getElementById("cb-link").href)}
+function wpnLine(el,w,txt,none){el.textContent="";if(!w){el.textContent=none;return}const a=document.createElement("a");a.className="wl";a.target="dwcombat";a.textContent=w.name;el.appendChild(a);el.appendChild(document.createTextNode(txt))}
 (function(){
 const g=i=>document.getElementById(i);
 function ctx(){
@@ -747,7 +748,7 @@ function ctx(){
 }
 function show(){
   const c=ctx();
-  g("cb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")":"No weapon armed - arm a Melee or Power Weapon on the Gear tab";
+  wpnLine(g("cb-wpn"),c.w,c.w&&" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")","No weapon armed - arm a Melee or Power Weapon on the Gear tab");
   g("cb-ws").textContent=c.ws||"unavailable";
   g("cb-sb").textContent=c.ws?c.sb:"-";
   LK.m=Object.assign({m_skill:c.ws||"",m_sb:c.sb},c.w?{m_name:c.w.name,m_dmg:c.w.dmg,m_pen:c.w.pen,m_special:c.w.special}:{});setLinks();
@@ -789,7 +790,7 @@ function ctx(){
 function m0(c){const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0];return m&&m.i===1?10:0}
 function show(){
   const c=ctx(),sel=g("rb-mode"),prev=sel.value;
-  g("rb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")":"No weapon armed - arm a ranged weapon on the Gear tab";
+  wpnLine(g("rb-wpn"),c.w,c.w&&" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")","No weapon armed - arm a ranged weapon on the Gear tab");
   g("rb-bs").textContent=c.bs||"unavailable";
   LK.r=Object.assign({r_skill:c.bs||""},c.w?{r_name:c.w.name,r_dmg:c.w.dmg,r_pen:c.w.pen,r_rof:c.w.rof,r_special:c.w.special}:{});setLinks();
   g("rb-dl").textContent=c.d?"Damage roll per hit ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
