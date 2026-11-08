@@ -54,6 +54,7 @@ html{-webkit-text-size-adjust:100%}
 button,input,select,label{touch-action:manipulation}
 button,select,label,label.btn,input[type=radio],input[type=file],[role=button]{cursor:pointer}
 button:disabled{cursor:not-allowed}
+a.btn{display:inline-block;padding:6px 12px;background:var(--thbg);color:var(--thfg);font-family:Oswald,sans-serif;text-transform:uppercase;text-decoration:none}
 label.btn{display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0;padding:6px 12px;background:var(--thbg);color:var(--thfg);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:14px;border:1px solid var(--head);-webkit-user-select:none;user-select:none}
 label.btn:active{background:var(--accent);border-color:var(--accent)}
 @media (hover:hover){label.btn:hover{background:var(--accent);border-color:var(--accent)}}
@@ -183,7 +184,7 @@ main{padding-bottom:110px}
 <div class="row"><div><label for="cb-aim">Aim</label><select id="cb-aim" autocomplete="off"><option value="0">None (+0)</option><option value="10">Half action (+10)</option><option value="20">Full action (+20)</option></select></div>
 <div><label for="cb-size">Target size</label><select id="cb-size" autocomplete="off"><option value="0">Average (+0)</option><option value="-10">Small (-10)</option><option value="10">Hulking (+10)</option><option value="20">Enormous (+20)</option><option value="30">Massive (+30)</option></select></div>
 <div><label for="cb-out2">Outnumbering</label><select id="cb-out2" autocomplete="off"><option value="0">No (+0)</option><option value="10">Yes (+10)</option></select></div></div>
-<p><button type="button" id="cb-go">Calculate</button></p>
+<p><button type="button" id="cb-go">Calculate</button> <a class="btn" id="cb-link" href="combat.html" target="dwcombat">Open in Combat Calculator</a></p>
 <div id="cb-out" class="note" hidden></div>
 <h2>Ranged</h2>
 <p class="note"><span id="rb-wpn"></span><br><b>The Roll:</b> Roll D100 against your BS (<span id="rb-bs"></span>) + modifiers.<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
@@ -192,7 +193,7 @@ main{padding-bottom:110px}
 <div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" autocomplete="off" value="" min="1"></div></div>
 <div class="row"><div><label for="rb-range">Range</label><select id="rb-range" autocomplete="off"><option value="0">Normal (+0)</option><option value="10">Short, within half range (+10)</option><option value="-10">Long (-10)</option><option value="-30">Extreme (-30)</option></select></div>
 <div><label for="rb-size">Target size</label><select id="rb-size" autocomplete="off"><option value="0">Average (+0)</option><option value="-10">Small (-10)</option><option value="10">Hulking (+10)</option><option value="20">Enormous (+20)</option><option value="30">Massive (+30)</option></select></div></div>
-<p><button type="button" id="rb-go">Calculate</button></p>
+<p><button type="button" id="rb-go">Calculate</button> <a class="btn" id="rb-link" href="combat.html" target="dwcombat">Open in Combat Calculator</a></p>
 <div id="rb-out" class="note" hidden></div>
 </section>
 <section class="panel" id="p-notes" role="tabpanel" aria-labelledby="t-notes" tabindex="-1">
@@ -732,6 +733,8 @@ function showTab(id,scroll){
   $("savetog").onclick=()=>{const m=$("savemore"),o=m.hidden;m.hidden=!o;$("savetog").setAttribute("aria-expanded",o);$("savetog").textContent=o?"Less":"More"};
 })();
 
+const LK={};
+function setLinks(){for(const[t,id]of[["melee","cb-link"],["ranged","rb-link"]])document.getElementById(id).href="combat.html?"+new URLSearchParams(Object.assign({type:t},LK.m,LK.r))}
 (function(){
 const g=i=>document.getElementById(i);
 function ctx(){
@@ -747,6 +750,7 @@ function show(){
   g("cb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")":"No weapon armed - arm a Melee or Power Weapon on the Gear tab";
   g("cb-ws").textContent=c.ws||"unavailable";
   g("cb-sb").textContent=c.ws?c.sb:"-";
+  LK.m=Object.assign({m_skill:c.ws||"",m_sb:c.sb},c.w?{m_name:c.w.name,m_dmg:c.w.dmg,m_pen:c.w.pen,m_special:c.w.special}:{});setLinks();
   g("cb-dl").textContent=c.d?"Damage roll ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
   return c;
 }
@@ -787,6 +791,7 @@ function show(){
   const c=ctx(),sel=g("rb-mode"),prev=sel.value;
   g("rb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")":"No weapon armed - arm a ranged weapon on the Gear tab";
   g("rb-bs").textContent=c.bs||"unavailable";
+  LK.r=Object.assign({r_skill:c.bs||""},c.w?{r_name:c.w.name,r_dmg:c.w.dmg,r_pen:c.w.pen,r_rof:c.w.rof,r_special:c.w.special}:{});setLinks();
   g("rb-dl").textContent=c.d?"Damage roll per hit ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
   sel.innerHTML=c.modes.map(m=>"<option value='"+m.i+"'>"+m.k+" ("+m.n+")</option>").join("");
   if(prev)sel.value=prev;
