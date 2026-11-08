@@ -54,6 +54,9 @@ html{-webkit-text-size-adjust:100%}
 button,input,select,label{touch-action:manipulation}
 button,select,label,label.btn,input[type=radio],input[type=file],[role=button]{cursor:pointer}
 button:disabled{cursor:not-allowed}
+img.dice{width:14px;height:14px;vertical-align:-2px;margin-right:2px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) img.dice{filter:invert(1)}}
+:root[data-theme="dark"] img.dice{filter:invert(1)}
 a.btn{display:inline-block;padding:6px 12px;background:var(--thbg);color:var(--thfg);font-family:Oswald,sans-serif;text-transform:uppercase;text-decoration:none}
 label.btn{display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0;padding:6px 12px;background:var(--thbg);color:var(--thfg);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:14px;border:1px solid var(--head);-webkit-user-select:none;user-select:none}
 label.btn:active{background:var(--accent);border-color:var(--accent)}
@@ -228,7 +231,7 @@ function combatUrl(kind){
 const tr=(w,keys,arm)=>{
   const on=arm===1&&w.name===armed||arm===2&&w.name===armedPower;
   const kind=keys.includes("rof")?"ranged":"melee";
-  return"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>k==="name"&&on?'<a href="'+combatUrl(kind).replace(/&/g,"&amp;")+'" target="dwcombat" title="Open in Combat Calculator">'+w.name+"</a>":w[k]).join("</td><td>")+"</td></tr>"};
+  return"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>k==="name"&&on?'<a href="'+combatUrl(kind).replace(/&/g,"&amp;")+'" target="dwcombat" title="Open in Combat Calculator"><img class="dice" src="dice-icon.svg" alt="" width="14" height="14"> '+w.name+"</a>":w[k]).join("</td><td>")+"</td></tr>"};
 function equipment(){
   const ex=EQUIP_SPEC[$("spec").value]||{};
   return{armour:EQUIP_ALL.armour+": With Chapter Marks for "+($("chapter").value||"(select a Chapter)"),weapons:[...EQUIP_ALL.weapons,...(ex.weapons||[])],grenades:EQUIP_ALL.grenades,melee:EQUIP_ALL.melee,power:EQUIP_ALL.power};
