@@ -177,16 +177,21 @@ main{padding-bottom:110px}
 </section>
 <section class="panel" id="p-combat" role="tabpanel" aria-labelledby="t-combat" tabindex="-1">
 <h2>Melee</h2>
-<p class="note"><span id="cb-wpn"></span><br><b>The Roll:</b> Roll D100 against your WS (<span id="cb-ws"></span>).<br><b>Base Damage:</b> weapon damage dice + weapon bonus + SB (<span id="cb-sb"></span>)</p>
+<p class="note"><span id="cb-wpn"></span><br><b>The Roll:</b> Roll D100 against your WS (<span id="cb-ws"></span>) + modifiers.<br><b>Base Damage:</b> weapon damage dice + weapon bonus + SB (<span id="cb-sb"></span>)</p>
 <div class="row"><div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" autocomplete="off" value="" min="1" max="100"></div>
 <div><label for="cb-dmg" id="cb-dl">Damage dice roll</label><input type="number" id="cb-dmg" autocomplete="off" value="" min="1"></div></div>
+<div class="row"><div><label for="cb-aim">Aim</label><select id="cb-aim" autocomplete="off"><option value="0">None (+0)</option><option value="10">Half action (+10)</option><option value="20">Full action (+20)</option></select></div>
+<div><label for="cb-size">Target size</label><select id="cb-size" autocomplete="off"><option value="0">Average (+0)</option><option value="-10">Small (-10)</option><option value="10">Hulking (+10)</option><option value="20">Enormous (+20)</option><option value="30">Massive (+30)</option></select></div>
+<div><label for="cb-out2">Outnumbering</label><select id="cb-out2" autocomplete="off"><option value="0">No (+0)</option><option value="10">Yes (+10)</option></select></div></div>
 <p><button type="button" id="cb-go">Calculate</button></p>
 <div id="cb-out" class="note" hidden></div>
 <h2>Ranged</h2>
-<p class="note"><span id="rb-wpn"></span><br><b>The Roll:</b> Roll D100 against your BS (<span id="rb-bs"></span>).<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
+<p class="note"><span id="rb-wpn"></span><br><b>The Roll:</b> Roll D100 against your BS (<span id="rb-bs"></span>) + modifiers.<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
 <div class="row"><div><label for="rb-mode">Fire mode</label><select id="rb-mode" autocomplete="off"></select></div>
 <div><label for="rb-roll">D100 Roll</label><input type="number" id="rb-roll" autocomplete="off" value="" min="1" max="100"></div>
 <div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" autocomplete="off" value="" min="1"></div></div>
+<div class="row"><div><label for="rb-range">Range</label><select id="rb-range" autocomplete="off"><option value="0">Normal (+0)</option><option value="10">Short, within half range (+10)</option><option value="-10">Long (-10)</option><option value="-30">Extreme (-30)</option></select></div>
+<div><label for="rb-size">Target size</label><select id="rb-size" autocomplete="off"><option value="0">Average (+0)</option><option value="-10">Small (-10)</option><option value="10">Hulking (+10)</option><option value="20">Enormous (+20)</option><option value="30">Massive (+30)</option></select></div></div>
 <p><button type="button" id="rb-go">Calculate</button></p>
 <div id="rb-out" class="note" hidden></div>
 </section>
@@ -752,8 +757,8 @@ g("cb-go").onclick=()=>{
   if(!c.w){o.textContent="No melee or power weapon is armed. Arm one on the Gear tab.";return}
   if(!c.ws){o.textContent="Weapon Skill is unavailable. Choose a Chapter and Speciality first.";return}
   if(isNaN(r)||r<1||r>100){o.textContent="Enter a D100 roll (1-100).";return}
-  const ws=c.ws,hit=r<=ws,dos=Math.floor(ws/10)-Math.floor(r/10);
-  let h="<b>Weapon:</b> "+c.w.name+"<br><b>The Roll:</b> D100 "+r+" vs WS "+ws+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
+  const mods=[["Aim",+g("cb-aim").value],["Size",+g("cb-size").value],["Outnumbering",+g("cb-out2").value]],ws=c.ws+mods.reduce((a,m)=>a+m[1],0),hit=r<=ws,dos=Math.floor(ws/10)-Math.floor(r/10);
+  let h="<b>Weapon:</b> "+c.w.name+"<br><b>The Roll:</b> D100 "+r+" vs WS "+c.ws+mods.filter(m=>m[1]).map(m=>" "+(m[1]>0?"+":"&minus;")+" "+Math.abs(m[1])+" ("+m[0]+")").join("")+" = "+ws+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
   h+=hit?"Degrees of success: 1 + (floor("+ws+"/10) &minus; floor("+r+"/10)) = "+(dos+1):"Degrees of failure: floor("+r+"/10) &minus; floor("+ws+"/10) = "+(Math.floor(r/10)-Math.floor(ws/10));
   if(hit){
     if(!c.d)h+="<br><br>Could not read weapon damage ("+c.w.dmg+").";
@@ -777,6 +782,7 @@ function ctx(){
   }
   return{w,bs,d,modes};
 }
+function m0(c){const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0];return m&&m.i===1?10:0}
 function show(){
   const c=ctx(),sel=g("rb-mode"),prev=sel.value;
   g("rb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")":"No weapon armed - arm a ranged weapon on the Gear tab";
@@ -794,8 +800,8 @@ g("rb-go").onclick=()=>{
   if(!c.bs){o.textContent="Ballistic Skill is unavailable. Choose a Chapter and Speciality first.";return}
   if(!c.modes.length){o.textContent="This weapon has no usable fire mode.";return}
   if(isNaN(r)||r<1||r>100){o.textContent="Enter a D100 roll (1-100).";return}
-  const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0],bs=c.bs,hit=r<=bs,diff=Math.floor(bs/10)-Math.floor(r/10);
-  let h="<b>Weapon:</b> "+c.w.name+" ("+m.k+")<br><b>The Roll:</b> D100 "+r+" vs BS "+bs+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
+  const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0],mods=[["Range",+g("rb-range").value],["Fire mode",m0(c)],["Size",+g("rb-size").value]],bs=c.bs+mods.reduce((a,x)=>a+x[1],0),hit=r<=bs,diff=Math.floor(bs/10)-Math.floor(r/10);
+  let h="<b>Weapon:</b> "+c.w.name+" ("+m.k+")<br><b>The Roll:</b> D100 "+r+" vs BS "+c.bs+mods.filter(m=>m[1]).map(m=>" "+(m[1]>0?"+":"&minus;")+" "+Math.abs(m[1])+" ("+m[0]+")").join("")+" = "+bs+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
   if(!hit)h+="Degrees of failure: floor("+r+"/10) &minus; floor("+bs+"/10) = "+(Math.floor(r/10)-Math.floor(bs/10));
   else{
     const extra=m.i===1?Math.floor(diff/2):m.i===2?diff:0,hits=Math.min(1+extra,m.n);
