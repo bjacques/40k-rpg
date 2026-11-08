@@ -54,6 +54,10 @@ html{-webkit-text-size-adjust:100%}
 button,input,select,label{touch-action:manipulation}
 button,select,label,label.btn,input[type=radio],input[type=file],[role=button]{cursor:pointer}
 button:disabled{cursor:not-allowed}
+img.dice{width:32px;height:32px;vertical-align:middle;margin:-10px 0 -10px 2px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) img.dice{filter:invert(1)}}
+:root[data-theme="dark"] img.dice{filter:invert(1)}
+a.btn{display:inline-block;padding:6px 12px;background:var(--thbg);color:var(--thfg);font-family:Oswald,sans-serif;text-transform:uppercase;text-decoration:none}
 label.btn{display:flex;align-items:center;justify-content:center;flex:0 0 auto;margin:0;padding:6px 12px;background:var(--thbg);color:var(--thfg);font-family:'Oswald',sans-serif;text-transform:uppercase;font-size:14px;border:1px solid var(--head);-webkit-user-select:none;user-select:none}
 label.btn:active{background:var(--accent);border-color:var(--accent)}
 @media (hover:hover){label.btn:hover{background:var(--accent);border-color:var(--accent)}}
@@ -213,7 +217,21 @@ let psy=[];
 let armed="",armedPower="",grenade="",grenQty=0;const PISTOL="Astartes Bolt Pistol";
 const armable=()=>{const q=equipment();return[...q.weapons,...q.melee,...q.power]};
 const rad=(w,g)=>'<td><input type="radio" name="'+(g===3?"grenade":g===2?"armedpwr":"armed")+'" value="'+w.name+'" aria-label="Arm '+w.name+'"'+(w.name===(g===3?grenade:g===2?armedPower:armed)?" checked":"")+'>'+(g===3?' <select class="gq" aria-label="Quantity of '+w.name+'"'+(w.name===grenade?'':' disabled')+'>'+[0,1,2,3].map(q=>'<option'+(w.name===grenade&&q===grenQty?' selected':'')+'>'+q+'</option>').join('')+'</select>':'')+'</td>';
-const tr=(w,keys,arm)=>"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>w[k]).join("</td><td>")+"</td></tr>";
+function combatUrl(kind){
+  const q=equipment(),P={type:kind};
+  const mw=armedPower?q.power.find(x=>x.name===armedPower):q.melee.concat(q.power).find(x=>x.name===armed);
+  const rw=q.weapons.find(x=>x.name===armed);
+  if(mw)Object.assign(P,{m_name:mw.name,m_dmg:mw.dmg,m_pen:mw.pen,m_special:mw.special});
+  if(rw)Object.assign(P,{r_name:rw.name,r_dmg:rw.dmg,r_pen:rw.pen,r_rof:rw.rof,r_special:rw.special});
+  const ws=baseOf("WS")+adj.WS,bs=baseOf("BS")+adj.BS;
+  if(ws)P.m_skill=ws,P.m_sb=Math.floor((baseOf("S")+adj.S)/10);
+  if(bs)P.r_skill=bs;
+  return"combat.html?"+new URLSearchParams(P);
+}
+const tr=(w,keys,arm)=>{
+  const on=arm===1&&w.name===armed||arm===2&&w.name===armedPower;
+  const kind=keys.includes("rof")?"ranged":"melee";
+  return"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>k==="name"&&on?'<a href="'+combatUrl(kind).replace(/&/g,"&amp;")+'" target="dwcombat" title="Open in Combat Calculator">'+w.name+' <img class="dice" src="six-sided-dice.svg" alt="" width="32" height="32"></a>':w[k]).join("</td><td>")+"</td></tr>"};
 function equipment(){
   const ex=EQUIP_SPEC[$("spec").value]||{};
   return{armour:EQUIP_ALL.armour+": With Chapter Marks for "+($("chapter").value||"(select a Chapter)"),weapons:[...EQUIP_ALL.weapons,...(ex.weapons||[])],grenades:EQUIP_ALL.grenades,melee:EQUIP_ALL.melee,power:EQUIP_ALL.power};
@@ -647,8 +665,8 @@ $("sheetrestore").onclick=async()=>{
     sheetStat("Restored "+(pick.character||"character")+" from the sheet.");
   }catch(e){sheetStat("Restore failed. Check your connection.")}
 };
-document.addEventListener("input",sched);
-document.addEventListener("change",sched);
+document.addEventListener("input",e=>{sched()});
+document.addEventListener("change",e=>{sched()});
 document.addEventListener("pointerdown",e=>{if(e.target.closest("button[data-k],#rnd,#unarm,#skall"))sched()});
 $("reset").addEventListener("pointerdown",sched);
 try{
@@ -710,6 +728,7 @@ function showTab(id,scroll){
   $("reset").addEventListener("pointerdown",()=>showTab("identity",true));
   $("savetog").onclick=()=>{const m=$("savemore"),o=m.hidden;m.hidden=!o;$("savetog").setAttribute("aria-expanded",o);$("savetog").textContent=o?"Less":"More"};
 })();
+
 </script>
 </body>
 </html>
