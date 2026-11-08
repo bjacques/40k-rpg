@@ -176,26 +176,6 @@ main{padding-bottom:110px}
 </div>
 
 </section>
-<section class="panel" id="p-combat" role="tabpanel" aria-labelledby="t-combat" tabindex="-1">
-<h2>Melee</h2>
-<p class="note"><span id="cb-wpn"></span><br><b>The Roll:</b> Roll D100 against your WS (<span id="cb-ws"></span>) + modifiers.<br><b>Base Damage:</b> weapon damage dice + weapon bonus + SB (<span id="cb-sb"></span>)</p>
-<div class="row"><div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" autocomplete="off" value="" min="1" max="100"></div>
-<div><label for="cb-dmg" id="cb-dl">Damage dice roll</label><input type="number" id="cb-dmg" autocomplete="off" value="" min="1"></div></div>
-<div class="row"><div><label for="cb-aim">Aim</label><select id="cb-aim" autocomplete="off"><option value="0">None (+0)</option><option value="10">Half action (+10)</option><option value="20">Full action (+20)</option></select></div>
-<div><label for="cb-size">Target size</label><select id="cb-size" autocomplete="off"><option value="0">Average (+0)</option><option value="-10">Small (-10)</option><option value="10">Hulking (+10)</option><option value="20">Enormous (+20)</option><option value="30">Massive (+30)</option></select></div>
-<div><label for="cb-out2">Outnumbering</label><select id="cb-out2" autocomplete="off"><option value="0">No (+0)</option><option value="10">Yes (+10)</option></select></div></div>
-<p><button type="button" id="cb-go">Calculate</button> <a class="btn" id="cb-link" href="combat.html" target="dwcombat">Open in Combat Calculator</a></p>
-<div id="cb-out" class="note" hidden></div>
-<h2>Ranged</h2>
-<p class="note"><span id="rb-wpn"></span><br><b>The Roll:</b> Roll D100 against your BS (<span id="rb-bs"></span>) + modifiers.<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
-<div class="row"><div><label for="rb-mode">Fire mode</label><select id="rb-mode" autocomplete="off"></select></div>
-<div><label for="rb-roll">D100 Roll</label><input type="number" id="rb-roll" autocomplete="off" value="" min="1" max="100"></div>
-<div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" autocomplete="off" value="" min="1"></div></div>
-<div class="row"><div><label for="rb-range">Range</label><select id="rb-range" autocomplete="off"><option value="0">Normal (+0)</option><option value="10">Short, within half range (+10)</option><option value="-10">Long (-10)</option><option value="-30">Extreme (-30)</option></select></div>
-<div><label for="rb-size">Target size</label><select id="rb-size" autocomplete="off"><option value="0">Average (+0)</option><option value="-10">Small (-10)</option><option value="10">Hulking (+10)</option><option value="20">Enormous (+20)</option><option value="30">Massive (+30)</option></select></div></div>
-<p><button type="button" id="rb-go">Calculate</button> <a class="btn" id="rb-link" href="combat.html" target="dwcombat">Open in Combat Calculator</a></p>
-<div id="rb-out" class="note" hidden></div>
-</section>
 <section class="panel" id="p-notes" role="tabpanel" aria-labelledby="t-notes" tabindex="-1">
 <h2>Additional Detail</h2>
 <textarea id="notes" rows="16" aria-label="Additional Detail" placeholder="Enter any additional details (maximum 16 lines)"></textarea>
@@ -234,7 +214,21 @@ let psy=[];
 let armed="",armedPower="",grenade="",grenQty=0;const PISTOL="Astartes Bolt Pistol";
 const armable=()=>{const q=equipment();return[...q.weapons,...q.melee,...q.power]};
 const rad=(w,g)=>'<td><input type="radio" name="'+(g===3?"grenade":g===2?"armedpwr":"armed")+'" value="'+w.name+'" aria-label="Arm '+w.name+'"'+(w.name===(g===3?grenade:g===2?armedPower:armed)?" checked":"")+'>'+(g===3?' <select class="gq" aria-label="Quantity of '+w.name+'"'+(w.name===grenade?'':' disabled')+'>'+[0,1,2,3].map(q=>'<option'+(w.name===grenade&&q===grenQty?' selected':'')+'>'+q+'</option>').join('')+'</select>':'')+'</td>';
-const tr=(w,keys,arm)=>"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>w[k]).join("</td><td>")+"</td></tr>";
+function combatUrl(kind){
+  const q=equipment(),P={type:kind};
+  const mw=armedPower?q.power.find(x=>x.name===armedPower):q.melee.concat(q.power).find(x=>x.name===armed);
+  const rw=q.weapons.find(x=>x.name===armed);
+  if(mw)Object.assign(P,{m_name:mw.name,m_dmg:mw.dmg,m_pen:mw.pen,m_special:mw.special});
+  if(rw)Object.assign(P,{r_name:rw.name,r_dmg:rw.dmg,r_pen:rw.pen,r_rof:rw.rof,r_special:rw.special});
+  const ws=baseOf("WS")+adj.WS,bs=baseOf("BS")+adj.BS;
+  if(ws)P.m_skill=ws,P.m_sb=Math.floor((baseOf("S")+adj.S)/10);
+  if(bs)P.r_skill=bs;
+  return"combat.html?"+new URLSearchParams(P);
+}
+const tr=(w,keys,arm)=>{
+  const on=arm===1&&w.name===armed||arm===2&&w.name===armedPower;
+  const kind=keys.includes("rof")?"ranged":"melee";
+  return"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>k==="name"&&on?'<a href="'+combatUrl(kind).replace(/&/g,"&amp;")+'" target="dwcombat" title="Open in Combat Calculator">'+w.name+"</a>":w[k]).join("</td><td>")+"</td></tr>"};
 function equipment(){
   const ex=EQUIP_SPEC[$("spec").value]||{};
   return{armour:EQUIP_ALL.armour+": With Chapter Marks for "+($("chapter").value||"(select a Chapter)"),weapons:[...EQUIP_ALL.weapons,...(ex.weapons||[])],grenades:EQUIP_ALL.grenades,melee:EQUIP_ALL.melee,power:EQUIP_ALL.power};
@@ -668,9 +662,8 @@ $("sheetrestore").onclick=async()=>{
     sheetStat("Restored "+(pick.character||"character")+" from the sheet.");
   }catch(e){sheetStat("Restore failed. Check your connection.")}
 };
-const notCombat=e=>!e.target.closest("#p-combat");
-document.addEventListener("input",e=>{if(notCombat(e))sched()});
-document.addEventListener("change",e=>{if(notCombat(e))sched()});
+document.addEventListener("input",e=>{sched()});
+document.addEventListener("change",e=>{sched()});
 document.addEventListener("pointerdown",e=>{if(e.target.closest("button[data-k],#rnd,#unarm,#skall"))sched()});
 $("reset").addEventListener("pointerdown",sched);
 try{
@@ -678,7 +671,7 @@ try{
   if(s){loadCsvText(s);msg("Restored your last character.")}
 }catch(e){}
 document.addEventListener("input",e=>e.target.classList.remove("bad"));document.addEventListener("change",e=>e.target.classList.remove("bad"));
-const TABS=[["identity","Identity"],["stats","Stats"],["gear","Gear"],["skills","Skills"],["combat","Combat"],["notes","Notes"]],TAB_KEY="dw40k.tab";
+const TABS=[["identity","Identity"],["stats","Stats"],["gear","Gear"],["skills","Skills"],["notes","Notes"]],TAB_KEY="dw40k.tab";
 function updIntro(left){
   if(left==null)left=parseInt($("left").textContent);
   const done=left===0&&$("player").value.trim()&&$("name").value.trim();
@@ -733,92 +726,6 @@ function showTab(id,scroll){
   $("savetog").onclick=()=>{const m=$("savemore"),o=m.hidden;m.hidden=!o;$("savetog").setAttribute("aria-expanded",o);$("savetog").textContent=o?"Less":"More"};
 })();
 
-const LK={};
-function setLinks(){for(const[t,id]of[["melee","cb-link"],["ranged","rb-link"]])document.getElementById(id).href="combat.html?"+new URLSearchParams(Object.assign({type:t},LK.m,LK.r));document.querySelectorAll("a.wl").forEach(a=>a.href=document.getElementById("cb-link").href)}
-function wpnLine(el,w,txt,none){el.textContent="";if(!w){el.textContent=none;return}const a=document.createElement("a");a.className="wl";a.target="dwcombat";a.textContent=w.name;el.appendChild(a);el.appendChild(document.createTextNode(txt))}
-(function(){
-const g=i=>document.getElementById(i);
-function ctx(){
-  const q=equipment(),nm=armedPower||(q.melee.concat(q.power).some(w=>w.name===armed)?armed:"");
-  const w=nm?q.melee.concat(q.power).find(x=>x.name===nm):null;
-  const ws=baseOf("WS")+adj.WS,sb=Math.floor((baseOf("S")+adj.S)/10);
-  let d=null;
-  if(w){const m=/^(\d+)d(\d+)\s*\+\s*(\d+)\s*(\w)?/i.exec(w.dmg);if(m)d={n:+m[1],f:+m[2],k:+m[3],t:m[4]==="E"?"Energy":m[4]==="R"?"Rending":m[4]==="X"?"Explosive":"Impact"}}
-  return{w,ws,sb,d};
-}
-function show(){
-  const c=ctx();
-  wpnLine(g("cb-wpn"),c.w,c.w&&" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")","No weapon armed - arm a Melee or Power Weapon on the Gear tab");
-  g("cb-ws").textContent=c.ws||"unavailable";
-  g("cb-sb").textContent=c.ws?c.sb:"-";
-  LK.m=Object.assign({m_skill:c.ws||"",m_sb:c.sb},c.w?{m_name:c.w.name,m_dmg:c.w.dmg,m_pen:c.w.pen,m_special:c.w.special}:{});setLinks();
-  g("cb-dl").textContent=c.d?"Damage roll ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
-  return c;
-}
-document.addEventListener("click",e=>{if(e.target.id==="t-combat")setTimeout(show,0)});
-g("cb-go").onclick=()=>{
-  const c=show(),r=parseInt(g("cb-roll").value),d=parseInt(g("cb-dmg").value),o=g("cb-out");
-  o.hidden=false;
-  if(!c.w){o.textContent="No melee or power weapon is armed. Arm one on the Gear tab.";return}
-  if(!c.ws){o.textContent="Weapon Skill is unavailable. Choose a Chapter and Speciality first.";return}
-  if(isNaN(r)||r<1||r>100){o.textContent="Enter a D100 roll (1-100).";return}
-  const mods=[["Aim",+g("cb-aim").value],["Size",+g("cb-size").value],["Outnumbering",+g("cb-out2").value]],ws=c.ws+mods.reduce((a,m)=>a+m[1],0),hit=r<=ws,dos=Math.floor(ws/10)-Math.floor(r/10);
-  let h="<b>Weapon:</b> "+c.w.name+"<br><b>The Roll:</b> D100 "+r+" vs WS "+c.ws+mods.filter(m=>m[1]).map(m=>" "+(m[1]>0?"+":"&minus;")+" "+Math.abs(m[1])+" ("+m[0]+")").join("")+" = "+ws+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
-  h+=hit?"Degrees of success: 1 + (floor("+ws+"/10) &minus; floor("+r+"/10)) = "+(dos+1):"Degrees of failure: floor("+r+"/10) &minus; floor("+ws+"/10) = "+(Math.floor(r/10)-Math.floor(ws/10));
-  if(hit){
-    if(!c.d)h+="<br><br>Could not read weapon damage ("+c.w.dmg+").";
-    else if(isNaN(d)||d<c.d.n||d>c.d.n*c.d.f)h+="<br><br>Enter your "+c.d.n+"D"+c.d.f+" damage roll ("+c.d.n+"-"+c.d.n*c.d.f+") to see damage.";
-    else{const t=d+c.d.k+c.sb;h+="<br><br><b>Base Damage:</b> "+c.d.n+"D"+c.d.f+" + "+c.d.k+" + SB<br>= "+d+" + "+c.d.k+" + "+c.sb+"<br>= <b>"+t+" "+c.d.t+" damage</b> | Pen "+c.w.pen+" | "+c.w.special}
-  }
-  o.innerHTML=h};
-})();
-
-(function(){
-const g=i=>document.getElementById(i);
-const TY={E:"Energy",R:"Rending",X:"Explosive",I:"Impact"};
-function ctx(){
-  const q=equipment(),w=q.weapons.find(x=>x.name===armed)||null;
-  const bs=baseOf("BS")+adj.BS;
-  let d=null,modes=[];
-  if(w){
-    const m=/^(\d+)d(\d+)(?:\s*\+\s*(\d+))?\s*\(?(\w)\)?/i.exec(w.dmg||"");
-    if(m)d={n:+m[1],f:+m[2],k:+(m[3]||0),t:TY[m[4].toUpperCase()]||"Impact"};
-    String(w.rof||"").split("/").forEach((v,i)=>{const n=parseInt(v);if(n>0)modes.push({k:["Single","Semi-auto","Full auto"][i],n,i})});
-  }
-  return{w,bs,d,modes};
-}
-function m0(c){const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0];return m&&m.i===1?10:0}
-function show(){
-  const c=ctx(),sel=g("rb-mode"),prev=sel.value;
-  wpnLine(g("rb-wpn"),c.w,c.w&&" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")","No weapon armed - arm a ranged weapon on the Gear tab");
-  g("rb-bs").textContent=c.bs||"unavailable";
-  LK.r=Object.assign({r_skill:c.bs||""},c.w?{r_name:c.w.name,r_dmg:c.w.dmg,r_pen:c.w.pen,r_rof:c.w.rof,r_special:c.w.special}:{});setLinks();
-  g("rb-dl").textContent=c.d?"Damage roll per hit ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
-  sel.innerHTML=c.modes.map(m=>"<option value='"+m.i+"'>"+m.k+" ("+m.n+")</option>").join("");
-  if(prev)sel.value=prev;
-  return c;
-}
-document.addEventListener("click",e=>{if(e.target.id==="t-combat")setTimeout(show,0)});
-g("rb-go").onclick=()=>{
-  const c=show(),r=parseInt(g("rb-roll").value),d=parseInt(g("rb-dmg").value),o=g("rb-out");
-  o.hidden=false;
-  if(!c.w){o.textContent="No ranged weapon is armed. Arm one on the Gear tab.";return}
-  if(!c.bs){o.textContent="Ballistic Skill is unavailable. Choose a Chapter and Speciality first.";return}
-  if(!c.modes.length){o.textContent="This weapon has no usable fire mode.";return}
-  if(isNaN(r)||r<1||r>100){o.textContent="Enter a D100 roll (1-100).";return}
-  const m=c.modes.find(x=>x.i==g("rb-mode").value)||c.modes[0],mods=[["Range",+g("rb-range").value],["Fire mode",m0(c)],["Size",+g("rb-size").value]],bs=c.bs+mods.reduce((a,x)=>a+x[1],0),hit=r<=bs,diff=Math.floor(bs/10)-Math.floor(r/10);
-  let h="<b>Weapon:</b> "+c.w.name+" ("+m.k+")<br><b>The Roll:</b> D100 "+r+" vs BS "+c.bs+mods.filter(m=>m[1]).map(m=>" "+(m[1]>0?"+":"&minus;")+" "+Math.abs(m[1])+" ("+m[0]+")").join("")+" = "+bs+" &rarr; "+(hit?"<b>HIT</b>":"<b>MISS</b>")+"<br>";
-  if(!hit)h+="Degrees of failure: floor("+r+"/10) &minus; floor("+bs+"/10) = "+(Math.floor(r/10)-Math.floor(bs/10));
-  else{
-    const extra=m.i===1?Math.floor(diff/2):m.i===2?diff:0,hits=Math.min(1+extra,m.n);
-    h+="Degrees of success: 1 + (floor("+bs+"/10) &minus; floor("+r+"/10)) = "+(diff+1)+"<br>";
-    h+="Hits: "+(m.i===0?"1 (single shot)":"1 + "+extra+" extra ("+(m.i===1?"1 per 2 degrees":"1 per degree")+"), capped at RoF "+m.n+" = <b>"+hits+"</b>");
-    if(!c.d)h+="<br><br>Could not read weapon damage ("+c.w.dmg+").";
-    else if(isNaN(d)||d<c.d.n||d>c.d.n*c.d.f)h+="<br><br>Enter your "+c.d.n+"D"+c.d.f+" damage roll ("+c.d.n+"-"+c.d.n*c.d.f+") to see damage.";
-    else{const t=d+c.d.k;h+="<br><br><b>Base Damage per hit:</b> "+c.d.n+"D"+c.d.f+(c.d.k?" + "+c.d.k:"")+"<br>= "+d+(c.d.k?" + "+c.d.k:"")+"<br>= <b>"+t+" "+c.d.t+" damage</b> | Pen "+c.w.pen+" | "+c.w.special+(hits>1?"<br>Roll damage separately for each of the "+hits+" hits.":"")}
-  }
-  o.innerHTML=h};
-})();
 </script>
 </body>
 </html>
