@@ -231,7 +231,7 @@ function combatUrl(kind){
 const tr=(w,keys,arm)=>{
   const on=arm===1&&w.name===armed||arm===2&&w.name===armedPower;
   const kind=keys.includes("rof")?"ranged":"melee";
-  return"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>k==="name"&&on?'<a href="'+combatUrl(kind).replace(/&/g,"&amp;")+'" target="dwcombat" title="Open in Combat Calculator">'+w.name+' <img class="dice" src="dice-icon.svg" alt="" width="32" height="32"></a>":w[k]).join("</td><td>")+"</td></tr>"};
+  return"<tr>"+(arm?rad(w,arm):"")+"<td>"+keys.map(k=>k==="name"&&on?'<a href="'+combatUrl(kind).replace(/&/g,"&amp;")+'" target="dwcombat" title="Open in Combat Calculator">'+w.name+' <img class="dice" src="dice-icon.svg" alt="" width="32" height="32"></a>':w[k]).join("</td><td>")+"</td></tr>"};
 function equipment(){
   const ex=EQUIP_SPEC[$("spec").value]||{};
   return{armour:EQUIP_ALL.armour+": With Chapter Marks for "+($("chapter").value||"(select a Chapter)"),weapons:[...EQUIP_ALL.weapons,...(ex.weapons||[])],grenades:EQUIP_ALL.grenades,melee:EQUIP_ALL.melee,power:EQUIP_ALL.power};
