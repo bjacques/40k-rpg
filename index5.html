@@ -177,22 +177,13 @@ main{padding-bottom:110px}
 </section>
 <section class="panel" id="p-combat" role="tabpanel" aria-labelledby="t-combat" tabindex="-1">
 <h2>Melee</h2>
-<p class="note"><b>The Roll:</b> Roll D100 against your Weapon Skill (WS).<br><b>Base Damage:</b> weapon damage dice + weapon bonus + Strength Bonus.</p>
-<div class="table-wrap"><table><tbody>
-<tr><th>Equipped weapon</th><td id="cb-wpn"></td></tr>
-<tr><th>Weapon Skill (WS)</th><td id="cb-ws"></td></tr>
-<tr><th>Strength Bonus</th><td id="cb-sb"></td></tr>
-</tbody></table></div>
+<p class="note"><span id="cb-wpn"></span><br><b>The Roll:</b> Roll D100 against your WS (<span id="cb-ws"></span>).<br><b>Base Damage:</b> weapon damage dice + weapon bonus + SB (<span id="cb-sb"></span>)</p>
 <div class="row"><div><label for="cb-roll">D100 Roll</label><input type="number" id="cb-roll" min="1" max="100"></div>
 <div><label for="cb-dmg" id="cb-dl">Damage dice roll</label><input type="number" id="cb-dmg" min="1"></div></div>
 <p><button type="button" id="cb-go">Calculate</button></p>
 <div id="cb-out" class="note" hidden></div>
 <h2>Ranged</h2>
-<p class="note"><b>The Roll:</b> Roll D100 against your Ballistic Skill (BS).<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
-<div class="table-wrap"><table><tbody>
-<tr><th>Equipped weapon</th><td id="rb-wpn"></td></tr>
-<tr><th>Ballistic Skill (BS)</th><td id="rb-bs"></td></tr>
-</tbody></table></div>
+<p class="note"><span id="rb-wpn"></span><br><b>The Roll:</b> Roll D100 against your BS (<span id="rb-bs"></span>).<br><b>Base Damage:</b> weapon damage dice + weapon bonus. Semi and full auto fire add hits from degrees of success, up to the weapon's RoF.</p>
 <div class="row"><div><label for="rb-mode">Fire mode</label><select id="rb-mode"></select></div>
 <div><label for="rb-roll">D100 Roll</label><input type="number" id="rb-roll" min="1" max="100"></div>
 <div><label for="rb-dmg" id="rb-dl">Damage dice roll</label><input type="number" id="rb-dmg" min="1"></div></div>
@@ -747,8 +738,8 @@ function ctx(){
 }
 function show(){
   const c=ctx();
-  g("cb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")":"None - arm a Melee or Power Weapon on the Gear tab";
-  g("cb-ws").textContent=c.ws||"Choose a Chapter and Speciality first";
+  g("cb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | "+c.w.special+")":"No weapon armed - arm a Melee or Power Weapon on the Gear tab";
+  g("cb-ws").textContent=c.ws||"unavailable";
   g("cb-sb").textContent=c.ws?c.sb:"-";
   g("cb-dl").textContent=c.d?"Damage roll ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
   return c;
@@ -787,8 +778,8 @@ function ctx(){
 }
 function show(){
   const c=ctx(),sel=g("rb-mode"),prev=sel.value;
-  g("rb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")":"None - arm a ranged weapon on the Gear tab";
-  g("rb-bs").textContent=c.bs||"Choose a Chapter and Speciality first";
+  g("rb-wpn").textContent=c.w?c.w.name+" ("+c.w.dmg+" | Pen "+c.w.pen+" | RoF "+c.w.rof+" | "+c.w.special+")":"No weapon armed - arm a ranged weapon on the Gear tab";
+  g("rb-bs").textContent=c.bs||"unavailable";
   g("rb-dl").textContent=c.d?"Damage roll per hit ("+c.d.n+"D"+c.d.f+", total)":"Damage roll";
   sel.innerHTML=c.modes.map(m=>"<option value='"+m.i+"'>"+m.k+" ("+m.n+")</option>").join("");
   if(prev)sel.value=prev;
