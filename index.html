@@ -48,7 +48,9 @@ td input[type=text]{width:56px;text-align:center}
 .step button{width:44px;padding:0;font-size:20px}
 input:disabled{opacity:.35;cursor:not-allowed!important}
 input[type=radio],input[type=checkbox]{width:26px;height:26px;accent-color:var(--accent);cursor:pointer}
-#skills input[type=text]{width:100%;min-width:140px;margin-top:4px;text-align:left}
+#skills input[data-sp]{width:100%;min-width:140px;margin-top:4px;text-align:left}
+#skills input.skbn{width:64px;text-align:center}
+#skills select{min-width:110px}
 input,select,button{min-height:44px}
 html{-webkit-text-size-adjust:100%}
 button,input,select,label{touch-action:manipulation}
@@ -164,9 +166,9 @@ main{padding-bottom:110px}
 </section>
 <section class="panel" id="p-skills" role="tabpanel" aria-labelledby="t-skills" tabindex="-1">
 <h2>Skills</h2>
-<p style="margin:0 0 8px;font-style:italic">Select one level per skill: Basic, Trained, Expert or Veteran. Untick it to clear the skill. BCS roll D100 under the Base Value. At Rank 1 only Basic can be selected.</p>
+<p style="margin:0 0 8px;font-style:italic">Choose a Competency per skill: None, Basic, Trained (+5), Expert (+10) or Veteran (+20). Enter a Bonus from -10 to 10. Total = Base Value + Bonus + Competency. BCS roll D100 under the Total. Base Value, Bonus and Total are blank while Competency is None.</p>
 <div class="row" style="align-items:center;margin-bottom:8px"><button id="skall" style="flex:0 0 auto">Select all that apply</button><span id="skmsg" style="flex:1 1 200px;font-style:italic"></span></div>
-<div class="table-wrap"><table><thead><tr><th>Skill</th><th>Skill Use</th><th>Stat</th><th class="num">Base Value</th><th class="num">Basic</th><th class="num">Trained (5)</th><th class="num">Expert (10)</th><th class="num">Veteran (20)</th></tr></thead><tbody id="skills"></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Skill</th><th>Skill Use</th><th>Stat</th><th>Competency</th><th class="num">Base Value</th><th class="num">Bonus</th><th class="num">Total</th></tr></thead><tbody id="skills"></tbody></table></div>
 
 <h2>Talents</h2>
 <p style="margin:0 0 8px"><b>Talents selected: <span id="talcount">0</span> / 2</b></p>
@@ -278,7 +280,7 @@ const showMsg=t=>{$("dlg2t").textContent=typeof t==="string"?t:WMSG;$("dlg2").st
 $("dok").onpointerdown=()=>setTimeout(()=>{$("dlg2").style.display="none"},300);
 function enforceSpec(alertIt){
   let hit=false;
-  {let sk=false;Object.keys(skLv).forEach(n=>{if(skLv[n]&&skillBanned(n)){delete skLv[n];delete skSp[n];sk=true}});if(sk){renderSkills();if(alertIt)showMsg(SMSG)}}
+  {let sk=false;Object.keys(skLv).forEach(n=>{if(skLv[n]&&skillBanned(n)){delete skLv[n];delete skSp[n];delete skBn[n];sk=true}});if(sk){renderSkills();if(alertIt)showMsg(SMSG)}}
   if((grenade||grenQty)&&GREN_BAN.includes($("spec").value)){grenade="";grenQty=0;if(alertIt)showMsg(GMSG)}
   if(armed&&wBanned(armed)){armed="";hit=true}
   if(armedPower&&wBanned(armedPower)){armedPower="";hit=true}
@@ -295,24 +297,36 @@ document.addEventListener("change",e=>{
 const SKILLS=[["Awareness", "Free", "PER"], ["Carouse", "Free", "T"], ["Ciphers (specific)", "Full", "INT", 1], ["Climb", "Half", "S"], ["Common Lore - Adeptus Astartes", "Free", "FEL"], ["Common Lore - Imperium", "Free", "FEL"], ["Common Lore - War", "Free", "FEL"], ["Concealment", "Half", "AG"], ["Dodge", "Reaction", "AG"], ["Drive Vehicle (specific)", "Half", "INT", 1], ["Evaluate", "Timed", "INT"], ["Inquiry", "1 Hour", "FEL"], ["Intimidate", "Full", "S"], ["Invocation", "1 Hour", "WP"], ["Literacy", "Varies", "INT"], ["Logic", "1 Hour", "INT"], ["Lore: Forbidden (psykers)", "Half", "INT"], ["Lore: Forbidden (Warp)", "Half", "INT"], ["Medicae", "Full", "INT"], ["Navigation (specific)", "Varies", "INT", 1], ["Pilot (specific)", "Half", "AG", 1], ["Scrutiny", "Full", "PER"], ["Search", "Full", "PER"], ["Foresight", "Full", "INT"], ["Psyniscience", "Full", "PER"], ["Security", "Varies", "AG"], ["Silent Move", "Free", "AG"], ["Survival", "Varies", "INT"], ["Swim", "Full", "S"], ["Tech-Use", "Varies", "INT"], ["Tracking", "Free", "INT"], ["Astartes Weapon Specialisation (specific)", "Varies", "WS", 1], ["Signature Wargear (specific)", "Varies", "T", 1], ["Deceive", "Free", "FEL"], ["Disguise", "Half", "FEL"]];
 SKILLS.sort((a,b)=>a[0].localeCompare(b[0],"en",{sensitivity:"base"}));
 const LV=["Basic","Trained","Expert","Veteran"];
-let skLv={},skSp={};
-function updSkillBase(){document.querySelectorAll(".skb").forEach(td=>{td.textContent=rdy()?baseOf(td.dataset.st):"—"})}
+let skLv={},skSp={},skBn={};
+const LVV=[0,5,10,20];
+const skTot=i=>{const[n,,st]=SKILLS[i];return rdy()?baseOf(st)+(skBn[n]||0)+LVV[skLv[n]-1]:"—"};
+function updSkillBase(){document.querySelectorAll(".skb").forEach(td=>{const i=+td.dataset.i,n=SKILLS[i][0];td.textContent=!skLv[n]?"":rdy()?baseOf(td.dataset.st):"—";const t=td.parentNode.querySelector(".skt");if(t)t.textContent=skLv[n]?skTot(i):""})}
+function updSkillTotal(i){const t=document.querySelector('.skt[data-i="'+i+'"]');if(t)t.textContent=skLv[SKILLS[i][0]]?skTot(i):""}
 const rankVal=()=>parseInt($("rank").value)||1;
 function renderSkills(){
-  const r1=rankVal()===1;
-  if(r1)Object.keys(skLv).forEach(k=>{if(skLv[k]>1)skLv[k]=1});
-  $("skills").innerHTML=SKILLS.map(([n,us,st,sp],i)=>"<tr><td>"+n+(sp?'<br><input type="text" data-sp="'+i+'" placeholder="'+(n.startsWith("Drive")?"Vehicle type":n.startsWith("Navigation")?"Navigation type":n.startsWith("Ciphers")?"Cipher type":"Specify")+'" aria-label="'+n+' specific" value="'+(skSp[n]||"").replace(/"/g,"&quot;")+'">':"")+"</td><td>"+us+"</td><td>"+st+'</td><td class="num skb" data-st="'+st+'"></td>'+
-    LV.map((l,j)=>'<td class="num"><input type="checkbox" data-s="'+i+'" data-l="'+(j+1)+'" aria-label="'+n+' '+l+'"'+((skLv[n]||0)===j+1?" checked":"")+(r1&&j>0?" disabled":"")+"></td>").join("")+"</tr>").join("");
+  $("skills").innerHTML=SKILLS.map(([n,us,st,sp],i)=>{const lv=skLv[n]||0;return "<tr><td>"+n+(sp?'<br><input type="text" data-sp="'+i+'" placeholder="'+(n.startsWith("Drive")?"Vehicle type":n.startsWith("Navigation")?"Navigation type":n.startsWith("Ciphers")?"Cipher type":"Specify")+'" aria-label="'+n+' specific" value="'+(skSp[n]||"").replace(/"/g,"&quot;")+'">':"")+"</td><td>"+us+"</td><td>"+st+"</td>"+
+    '<td><select data-s="'+i+'" aria-label="'+n+' competency"><option value="0">None</option>'+LV.map((l,j)=>'<option value="'+(j+1)+'"'+(lv===j+1?" selected":"")+">"+l+"</option>").join("")+"</select></td>"+
+    '<td class="num skb" data-st="'+st+'" data-i="'+i+'"></td>'+
+    '<td class="num">'+(lv?'<input type="text" inputmode="numeric" class="skbn" data-b="'+i+'" aria-label="'+n+' bonus" placeholder="0" value="'+(skBn[n]||"")+'">':"")+"</td>"+
+    '<td class="num skt" data-i="'+i+'"></td></tr>'}).join("");
   updSkillBase();
 }
-function skillsOut(){const o={};SKILLS.forEach(([n,us,st,sp])=>{o[n]={use:us,stat:st,level:(skLv[n]?LV[skLv[n]-1]:"None"),...(sp?{specific:skSp[n]||""}:{})}});return o}
+function skillsOut(){const o={};SKILLS.forEach(([n,us,st,sp])=>{o[n]={use:us,stat:st,level:(skLv[n]?LV[skLv[n]-1]:"None"),...(skLv[n]?{bonus:skBn[n]||0,total:skTot(SKILLS.findIndex(x=>x[0]===n))}:{}),...(sp?{specific:skSp[n]||""}:{})}});return o}
 $("skills").addEventListener("change",e=>{
-  const t=e.target;if(t.dataset.s===undefined)return;
-  const n=SKILLS[+t.dataset.s][0],l=+t.dataset.l;
-  if(t.checked&&skillBanned(n)){showMsg(SMSG);renderSkills();return}
-  skLv[n]=t.checked?l:0;renderSkills();
+  const t=e.target;
+  if(t.dataset.b!==undefined){const i=+t.dataset.b,n=SKILLS[i][0];const v=skBn[n]||0;t.value=v?v:"";updSkillTotal(i);return}
+  if(t.dataset.s===undefined)return;
+  const n=SKILLS[+t.dataset.s][0],l=+t.value;
+  if(l&&skillBanned(n)){showMsg(SMSG);renderSkills();return}
+  skLv[n]=l;if(!l)delete skBn[n];renderSkills();
 });
-$("skills").addEventListener("input",e=>{const t=e.target;if(t.dataset.sp!==undefined)skSp[SKILLS[+t.dataset.sp][0]]=t.value});
+$("skills").addEventListener("input",e=>{const t=e.target;if(t.dataset.sp!==undefined)skSp[SKILLS[+t.dataset.sp][0]]=t.value;
+  if(t.dataset.b!==undefined){const i=+t.dataset.b,n=SKILLS[i][0];
+    let r=t.value.replace(/[^0-9-]/g,"").replace(/(?!^)-/g,"");if(r!==t.value)t.value=r;
+    const v=Math.max(-10,Math.min(10,parseInt(r)||0));
+    if(v)skBn[n]=v;else delete skBn[n];
+    if(r!==""&&r!=="-"&&String(v)!==r){t.value=v}
+    updSkillTotal(i)}});
 renderSkills();
 $("unarm").onpointerdown=()=>{armed="";armedPower="";calc()};
 $("spec").onchange=()=>{$("specdesc").textContent=SPECS[$("spec").value]||"";enforceSpec(true);calc()};
@@ -403,7 +417,7 @@ function compact(){
   const ar={};if(v("shield"))ar.shield=v("shield");if(v("jump"))ar.jumpPack=v("jump");
   if(Object.keys(ar).length)o.armour=ar;
   const sk={};
-  SKILLS.forEach(([n,us,st2,sp])=>{const e={};if(skLv[n])e.level=LV[skLv[n]-1];if(sp&&(skSp[n]||"").trim())e.specific=skSp[n].trim();if(Object.keys(e).length)sk[n]=e});
+  SKILLS.forEach(([n,us,st2,sp])=>{const e={};if(skLv[n]){e.level=LV[skLv[n]-1];if(skBn[n])e.bonus=skBn[n]}if(sp&&(skSp[n]||"").trim())e.specific=skSp[n].trim();if(Object.keys(e).length)sk[n]=e});
   if(Object.keys(sk).length)o.skills=sk;
   if(grenade){o.grenade=grenade;o.grenadeQuantity=grenQty}
   if(tal.length)o.talents=tal.slice();
@@ -430,7 +444,7 @@ function csvRows(){
   if(armedPower)add("Equipment","Armed Power Weapon",armedPower);
   if(v("shield"))add("Armour","Shield",v("shield"));
   if(v("jump"))add("Armour","Jump Pack",v("jump"));
-  SKILLS.forEach(([n,us,st2,sp])=>{if(skLv[n])add("Skills",n,LV[skLv[n]-1]);if(sp&&(skSp[n]||"").trim())add("Skills",n+" - detail",skSp[n].trim())});
+  SKILLS.forEach(([n,us,st2,sp])=>{if(skLv[n]){add("Skills",n,LV[skLv[n]-1]);if(skBn[n])add("Skills",n+" - bonus",skBn[n])}if(sp&&(skSp[n]||"").trim())add("Skills",n+" - detail",skSp[n].trim())});
   if(grenade){add("Equipment","Grenade",grenade);add("Equipment","Grenade Quantity",grenQty)}
   tal.forEach(t=>add("Talents","Talent",t));
   psy.forEach(t=>add("Psychic Abilities","Ability",t));
@@ -505,9 +519,9 @@ function loadCsvText(text){
   grenade=has(q.grenades,g)?g:"";grenQty=[0,1,2,3].includes(gq)?gq:0;
   $("shield").value=get("Armour","Shield");
   $("jump").value=get("Armour","Jump Pack");
-  skLv={};skSp={};
+  skLv={};skSp={};skBn={};
   SKILLS.forEach(([n,us,st,sp])=>{
-    const j=LV.indexOf(get("Skills",n));if(j>=0)skLv[n]=j+1;
+    const j=LV.indexOf(get("Skills",n));if(j>=0){skLv[n]=j+1;const bn=Math.max(-10,Math.min(10,parseInt(get("Skills",n+" - bonus"))||0));if(bn)skBn[n]=bn}
     const dt=get("Skills",n+" - detail");if(sp&&dt)skSp[n]=dt;
   });
   renderSkills();
@@ -533,7 +547,7 @@ $("csvfile").onchange=e=>{
   r.readAsText(f);
 };
 $("reset").onpointerdown=()=>{
-  $("name").value="";$("chapter").selectedIndex=0;buildSpecs();setDem("");$("skmsg").textContent="";$("renown").value="";$("ppr").value="";$("notes").value="";updNotes();grenade="";grenQty=0;tal=[];renderTalents();psy=[];$("player").value="";$("rank").value="1";$("xpadd").value="";skLv={};skSp={};renderSkills();$("shield").value="";$("jump").value="";showCrest();armed="";armedPower="";
+  $("name").value="";$("chapter").selectedIndex=0;buildSpecs();setDem("");$("skmsg").textContent="";$("renown").value="";$("ppr").value="";$("notes").value="";updNotes();grenade="";grenQty=0;tal=[];renderTalents();psy=[];$("player").value="";$("rank").value="1";$("xpadd").value="";skLv={};skSp={};skBn={};renderSkills();$("shield").value="";$("jump").value="";showCrest();armed="";armedPower="";
   STATS.forEach(([k])=>{adj[k]=0;$("a_"+k).value=0});woundRoll=1+Math.floor(Math.random()*6);calc();msg("Reset.");
 };
 $("rank").addEventListener("input",e=>{e.target.value=e.target.value.replace(/[^0-9]/g,"")});
